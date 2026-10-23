@@ -38,9 +38,9 @@
 - **规则统计**: 规则执行次数、模板分布统计与默认规则一键初始化
 
 ### 员工标签 / Employee Tagging
-- **多维度自动打标**: 基于 Drools 规则引擎，从技能、经验、职级、绩效等多维度自动为员工打标
+- **多维度自动打标**: 基于 Drools 规则引擎，从履历（经验档位/学历）、技能、考评（绩效档位/成长/协作）、潜力等多维度自动为员工打标，档位区间互斥、同维度单命中
 - **自定义标签规则**: 7 种规则模板（经验/技能/绩效/学历/领导力/复合/自定义）在线配置生成 DRL
-- **标签生命周期**: 按维度自动过期（考评 6 月 / 能力 1 年 / 履历 2 年）与置信度评估
+- **标签生命周期**: 按维度自动过期（考评 6 月 / 能力 1 年 / 履历 2 年）与置信度评估；打标结果自动落库 employee_tag 表（先失效同源旧标签再批量保存，演示场景无主键时仅内存返回）
 
 ### 岗位匹配 / Position Matching
 - **技能匹配**: 基于技能标签库进行精准匹配
@@ -129,6 +129,19 @@ npm run dev
 
 > 数据库默认连接 `localhost:3306/employee_tagging`，账号 root，密码取环境变量 `DB_PASSWORD`（默认 root）。
 
+### 运行测试 / Running Tests
+
+```bash
+# 测试必须在 JDK 8 ~ 17 下运行（Drools 7.73 的 MVEL 依赖 JDK 21 起被移除的 java.lang.Compiler）
+# Tests require JDK 8 ~ 17 (MVEL relies on java.lang.Compiler, removed in JDK 21)
+export JAVA_HOME=$(/usr/libexec/java_home -v 11)   # macOS 示例 / macOS example
+mvn clean test -f drools-hr-tagging-backend/pom.xml
+```
+
+当前 10 个测试用例：规则层 5 例（DRL 可编译、经验/绩效档位互斥、标签来源/原因/过期时间、无重复打标）+ 服务层 5 例（落库过滤条件、字段映射、旧标签失效顺序）。JDK 21+ 仅可编译（`mvn compile`），无法运行规则引擎。
+
+10 test cases in total: 5 rule-layer (DRL compiles, exclusive experience/performance ladders, tag provenance & dedup) + 5 service-layer (persistence filtering, field mapping, deactivate-then-save ordering). On JDK 21+ only compilation works; the rule engine cannot run.
+
 
 ---
 
@@ -162,12 +175,15 @@ drools-hr-tagging/
 │       │   └── tagging/                 # 标签系统：controller / model(EnhancedEmployee,Tag,TagRule...) / service
 │       │       ├── service/impl/        # 员工、标签、分类、规则模板业务实现
 │       │       └── model/dto/           # RuleExecuteResult / RuleValidateResult
-│       └── resources/
-│           ├── application.properties   # 主配置（密码走环境变量 DB_PASSWORD）
-│           └── rules/                   # DRL 规则
-│               ├── employee-tagging-rules.drl          # 经验/技能打标规则
-│               ├── enhanced-employee-tagging-rules.drl # 增强打标规则
-│               └── position-matching-rules.drl         # 五维匹配评分规则
+│       ├── resources/
+│       │   ├── application.properties   # 主配置（密码走环境变量 DB_PASSWORD）
+│       │   └── rules/                   # DRL 规则
+│       │       ├── employee-tagging-rules.drl          # 履历维度：经验 5 档互斥 + 学历/技能/领导力/潜力
+│       │       ├── enhanced-employee-tagging-rules.drl # 考评维度：绩效 5 档互斥 + 成长/协作
+│       │       └── position-matching-rules.drl         # 五维匹配评分规则
+│       └── test/java/com/northland/drools/tagging/
+│           ├── rules/EmployeeTaggingRulesTest.java              # 规则层：编译/互斥档位/标签完整性
+│           └── service/impl/EmployeeTagServiceImplTest.java     # 服务层：落库过滤/映射/失效顺序
 ├── drools-hr-tagging-frontend/          # 前端模块（Vue 2.6 + Element UI）
 │   ├── package.json
 │   ├── vue.config.js                    # devServer 端口 9528
@@ -182,8 +198,6 @@ drools-hr-tagging/
 ├── AGENTS.md                            # AI 协作说明（架构约束、已知陷阱）
 └── README.md · LICENSE · CHANGELOG.md · CONTRIBUTING.md
 ```
-
-> 测试用例尚未补齐（`src/test` 为空），欢迎 PR 补充——这是当前最欢迎的贡献方向。```
 
 ---
 
