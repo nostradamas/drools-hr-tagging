@@ -1,0 +1,112 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+package-lock.json
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# IDE - Eclipse
+.settings/
+.project
+.classpath
+*.classpath
+*.project
+*.settings
+bin/
+
+# IDE - VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# IDE - NetBeans
+nbproject/
+nbactions.xml
+nb-configuration.xml
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+logs/
+log/
+
+# Temp files
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.tmp
+
+# Environment
+.env
+.env.local
+.env.*.local
+application-local.properties
+application-local.yml
+application-local.yaml
+
+# Uploads
+uploads/
+upload/
+
+# Database
+*.db
+*.sqlite
+*.h2.db
+
+# Spring Boot
+spring-boot-devtools.properties
+!.mvn/wrapper/maven-wrapper.jar
+
+# Test reports
+test-output/
+surefire-reports/
+target/surefire-reports/
+
+# Docker
+docker-compose.override.yml
+
+# Project specific
+sql/init-data/
+temp/
