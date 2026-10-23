@@ -5,7 +5,7 @@ import com.northland.drools.matching.model.Employee
 // 高级开发者标签规则
 rule "Tag Senior Developer"
     when
-        $employee : Employee(yearsOfExperience >= 5)
+        $employee : Employee(workExperience >= 5)
     then
         System.out.println("员工 " + $employee.getName() + " 被标记为：高级开发者");
 end
@@ -13,7 +13,7 @@ end
 // 初级开发者标签规则
 rule "Tag Junior Developer"
     when
-        $employee : Employee(yearsOfExperience < 2)
+        $employee : Employee(workExperience < 2)
     then
         System.out.println("员工 " + $employee.getName() + " 被标记为：初级开发者");
 end
@@ -21,7 +21,7 @@ end
 // 中级开发者标签规则
 rule "Tag Mid-level Developer"
     when
-        $employee : Employee(yearsOfExperience >= 2 && yearsOfExperience < 5)
+        $employee : Employee(workExperience >= 2 && workExperience < 5)
     then
         System.out.println("员工 " + $employee.getName() + " 被标记为：中级开发者");
 end
@@ -29,7 +29,7 @@ end
 // 技术专家标签规则
 rule "Tag Technical Expert"
     when
-        $employee : Employee(yearsOfExperience >= 8)
+        $employee : Employee(workExperience >= 8)
     then
         System.out.println("员工 " + $employee.getName() + " 被标记为：技术专家");
 end
@@ -37,7 +37,7 @@ end
 // 管理潜质标签规则
 rule "Tag Management Potential"
     when
-        $employee : Employee(yearsOfExperience >= 3)
+        $employee : Employee(workExperience >= 3)
     then
         System.out.println("员工 " + $employee.getName() + " 被标记为：管理潜质");
 end
@@ -72,7 +72,7 @@ end
 // 高潜力员工标签规则 - 已移除对不存在属性的引用
 rule "Tag High Potential"
     when
-        $employee : Employee(yearsOfExperience >= 2)
+        $employee : Employee(workExperience >= 2)
     then
         System.out.println("员工 " + $employee.getName() + " 被标记为：高潜力员工");
 end
@@ -80,7 +80,7 @@ end
 // 需要培训标签规则
 rule "Tag Needs Training"
     when
-        $employee : Employee(yearsOfExperience >= 1)
+        $employee : Employee(workExperience >= 1)
     then
         System.out.println("员工 " + $employee.getName() + " 被标记为：需要培训");
 end
