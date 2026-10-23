@@ -14,9 +14,9 @@ import com.northland.drools.tagging.service.RuleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.drools.core.io.impl.ByteArrayResource;
-import org.kie.api.KieBase;
 import org.kie.api.KieServices;
 import org.kie.api.builder.*;
+import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +35,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RuleServiceImpl extends ServiceImpl<RuleTemplateMapper, RuleTemplate> implements RuleService {
 
-    private final KieBase kieBase;
+    private final KieContainer kieContainer;
 
     @Override
     public IPage<RuleTemplate> queryRuleTemplates(Page<RuleTemplate> page, String keyword) {
@@ -117,7 +117,7 @@ public class RuleServiceImpl extends ServiceImpl<RuleTemplateMapper, RuleTemplat
 
         KieSession kieSession = null;
         try {
-            kieSession = kieBase.newKieSession();
+            kieSession = kieContainer.newKieSession();
             List<Object> results = new ArrayList<>();
             
             // 插入事实对象

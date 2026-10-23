@@ -4,6 +4,7 @@ import com.northland.drools.tagging.model.EnhancedEmployee;
 import com.northland.drools.tagging.model.EmployeeTag;
 import com.northland.drools.tagging.model.Tag;
 import com.northland.drools.tagging.model.TagCategory;
+import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,20 +18,20 @@ import java.util.stream.Collectors;
  */
 @Service
 public class EnhancedEmployeeTaggingService {
-    
+
     @Autowired
-    private KieSession kieSession;
-    
+    private KieContainer kieContainer;
+
     @Autowired
     private TagLibraryService tagLibraryService;
-    
+
     /**
      * 给员工打标签（全维度）
      */
     public EnhancedEmployee tagEmployee(EnhancedEmployee employee) {
         // 清理过期标签
         cleanExpiredTags(employee);
-        
+
         // 清空当前标签（保留手动添加的标签）
         List<EmployeeTag> tagsToRemove = new ArrayList<EmployeeTag>();
         for (EmployeeTag tag : employee.getCurrentTags()) {
@@ -39,22 +40,25 @@ public class EnhancedEmployeeTaggingService {
             }
         }
         employee.getCurrentTags().removeAll(tagsToRemove);
-        
-        // 设置全局变量
-        kieSession.setGlobal("tagLibraryService", tagLibraryService);
-        
-        // 插入员工对象到规则引擎
-        kieSession.insert(employee);
-        
-        // 执行标签规则
-        kieSession.fireAllRules();
-        
-        // 清理会话
-        kieSession.dispose();
-        
+
+        // 每次请求新建会话，用完即释放
+        KieSession kieSession = kieContainer.newKieSession();
+        try {
+            // 设置全局变量
+            kieSession.setGlobal("tagLibraryService", tagLibraryService);
+
+            // 插入员工对象到规则引擎
+            kieSession.insert(employee);
+
+            // 执行标签规则
+            kieSession.fireAllRules();
+        } finally {
+            kieSession.dispose();
+        }
+
         // 按维度和优先级排序标签
         sortTagsByPriorityAndDimension(employee);
-        
+
         return employee;
     }
     
