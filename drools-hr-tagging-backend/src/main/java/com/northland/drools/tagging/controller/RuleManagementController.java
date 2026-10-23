@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -181,8 +182,10 @@ public class RuleManagementController {
             
             String generatedContent = ruleTemplateService.generateRuleContent(tempRule);
             
-            return new ApiResponse(true, "规则预览生成成功", 
-                Map.of("ruleContent", generatedContent, "isValid", ruleTemplateService.validateRule(generatedContent)));
+            Map<String, Object> data = new HashMap<String, Object>();
+                data.put("ruleContent", generatedContent);
+                data.put("isValid", ruleTemplateService.validateRule(generatedContent));
+                return new ApiResponse(true, "规则预览生成成功", data);
                 
         } catch (Exception e) {
             return new ApiResponse(false, "规则预览生成失败: " + e.getMessage(), null);
@@ -197,8 +200,10 @@ public class RuleManagementController {
         try {
             boolean isValid = ruleTemplateService.validateRule(request.getRuleContent());
             
-            return new ApiResponse(true, "规则验证完成", 
-                Map.of("isValid", isValid, "message", isValid ? "规则语法正确" : "规则语法错误"));
+            Map<String, Object> data = new HashMap<String, Object>();
+                data.put("isValid", isValid);
+                data.put("message", isValid ? "规则语法正确" : "规则语法错误");
+                return new ApiResponse(true, "规则验证完成", data);
                 
         } catch (Exception e) {
             return new ApiResponse(false, "规则验证失败: " + e.getMessage(), null);
@@ -270,9 +275,11 @@ public class RuleManagementController {
                 }
             }
             
-            return new ApiResponse(true, 
-                String.format("批量操作完成，成功: %d, 失败: %d", successCount, failCount), 
-                Map.of("success", successCount, "failed", failCount));
+            Map<String, Object> data = new HashMap<String, Object>();
+                data.put("success", successCount);
+                data.put("failed", failCount);
+                return new ApiResponse(true,
+                String.format("批量操作完成，成功: %d, 失败: %d", successCount, failCount), data);
                 
         } catch (Exception e) {
             return new ApiResponse(false, "批量操作失败: " + e.getMessage(), null);
@@ -339,9 +346,12 @@ public class RuleManagementController {
                 }
             }
             
-            return new ApiResponse(true, 
-                String.format("导入完成，导入: %d, 跳过: %d, 失败: %d", importedCount, skippedCount, failedCount),
-                Map.of("imported", importedCount, "skipped", skippedCount, "failed", failedCount));
+            Map<String, Object> data = new HashMap<String, Object>();
+                data.put("imported", importedCount);
+                data.put("skipped", skippedCount);
+                data.put("failed", failedCount);
+                return new ApiResponse(true,
+                String.format("导入完成，导入: %d, 跳过: %d, 失败: %d", importedCount, skippedCount, failedCount), data);
                 
         } catch (Exception e) {
             return new ApiResponse(false, "导入失败: " + e.getMessage(), null);

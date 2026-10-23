@@ -3,6 +3,7 @@ package com.northland.drools.matching.service;
 import com.northland.drools.matching.model.Employee;
 import com.northland.drools.matching.model.Position;
 import com.northland.drools.matching.model.MatchingResult;
+import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,16 +15,16 @@ import java.util.List;
 public class EmployeeMatchingService {
 
     @Autowired
-    private KieSession kieSession;
+    private KieContainer kieContainer;
 
     /**
      * 单个员工与单个职位匹配
      */
     public MatchingResult matchEmployeeToPosition(Employee employee, Position position) {
         MatchingResult result = new MatchingResult(employee, position);
-        
-        // 创建新的KieSession实例避免状态污染
-        KieSession session = kieSession.getKieBase().newKieSession();
+
+        // 每次匹配新建会话，避免共享会话的状态污染
+        KieSession session = kieContainer.newKieSession();
         
         try {
             // 插入事实到工作内存

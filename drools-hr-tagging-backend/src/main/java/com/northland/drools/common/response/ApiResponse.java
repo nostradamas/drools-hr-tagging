@@ -21,6 +21,10 @@ public class ApiResponse<T> {
         this.data = data;
     }
 
+    public static <T> ApiResponse<T> ok() {
+        return new ApiResponse<T>(true, "操作成功", null);
+    }
+
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<T>(true, "操作成功", data);
     }

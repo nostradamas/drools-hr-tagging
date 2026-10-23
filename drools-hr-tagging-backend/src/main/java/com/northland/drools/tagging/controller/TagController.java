@@ -2,7 +2,7 @@ package com.northland.drools.tagging.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.northland.drools.common.response.Result;
+import com.northland.drools.common.response.ApiResponse;
 import com.northland.drools.entity.Tag;
 import com.northland.drools.tagging.service.TagService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class TagController {
      * 分页查询标签
      */
     @GetMapping
-    public Result<Page<Tag>> list(@RequestParam(defaultValue = "1") Integer current,
+    public ApiResponse<Page<Tag>> list(@RequestParam(defaultValue = "1") Integer current,
                                  @RequestParam(defaultValue = "10") Integer size,
                                  @RequestParam(required = false) String keyword,
                                  @RequestParam(required = false) String category) {
@@ -31,48 +31,48 @@ public class TagController {
                         .like(keyword != null, Tag::getName, keyword)
                         .eq(category != null, Tag::getCategory, category)
                         .orderByDesc(Tag::getId));
-        return Result.success(page);
+        return ApiResponse.success(page);
     }
 
     /**
      * 添加标签
      */
     @PostMapping
-    public Result<Void> add(@RequestBody Tag tag) {
+    public ApiResponse<Void> add(@RequestBody Tag tag) {
         tagService.save(tag);
-        return Result.success();
+        return ApiResponse.ok();
     }
 
     /**
      * 修改标签
      */
     @PutMapping("/{id}")
-    public Result<Void> update(@PathVariable Long id, @RequestBody Tag tag) {
+    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody Tag tag) {
         tag.setId(id);
         tagService.updateById(tag);
-        return Result.success();
+        return ApiResponse.ok();
     }
 
     /**
      * 删除标签
      */
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public ApiResponse<Void> delete(@PathVariable Long id) {
         tagService.removeById(id);
-        return Result.success();
+        return ApiResponse.ok();
     }
 
     /**
      * 根据分类获取标签列表
      */
     @GetMapping("/by-category/{category}")
-    public Result<Page<Tag>> listByCategory(@PathVariable String category,
+    public ApiResponse<Page<Tag>> listByCategory(@PathVariable String category,
                                           @RequestParam(defaultValue = "1") Integer current,
                                           @RequestParam(defaultValue = "10") Integer size) {
         Page<Tag> page = tagService.page(new Page<>(current, size),
                 new LambdaQueryWrapper<Tag>()
                         .eq(Tag::getCategory, category)
                         .orderByDesc(Tag::getId));
-        return Result.success(page);
+        return ApiResponse.success(page);
     }
 }

@@ -151,27 +151,6 @@ public class EmployeeMatchingController {
     }
 
     /**
-     * 员工与职位匹配
-     */
-    @PostMapping("/match")
-    public MatchingResult matchEmployeeToPosition(@RequestBody MatchRequest request) {
-        return matchingService.matchEmployeeToPosition(request.getEmployee(), request.getPosition());
-    }
-
-    /**
-     * 批量匹配员工到职位
-     */
-    @PostMapping("/batch-match")
-    public List<MatchingResult> batchMatchLegacy(@RequestBody BatchMatchRequest request) {
-        Position singlePosition = request.getPositions() != null && !request.getPositions().isEmpty()
-            ? request.getPositions().get(0) : null;
-        if (singlePosition == null) {
-            throw new IllegalArgumentException("positions must not be empty");
-        }
-        return matchingService.matchEmployeesToPosition(request.getEmployees(), singlePosition);
-    }
-
-    /**
      * 获取测试数据
      */
     @GetMapping("/test-data")

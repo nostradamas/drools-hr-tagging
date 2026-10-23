@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -174,9 +175,11 @@ public class TagLibraryManagementController {
                 }
             }
             
-            return new ApiResponse(true, 
-                String.format("批量操作完成，成功: %d, 失败: %d", successCount, failCount), 
-                Map.of("success", successCount, "failed", failCount));
+            Map<String, Object> data = new HashMap<String, Object>();
+                data.put("success", successCount);
+                data.put("failed", failCount);
+                return new ApiResponse(true,
+                String.format("批量操作完成，成功: %d, 失败: %d", successCount, failCount), data);
                 
         } catch (Exception e) {
             return new ApiResponse(false, "批量操作失败: " + e.getMessage(), null);
@@ -235,9 +238,11 @@ public class TagLibraryManagementController {
                 }
             }
             
-            return new ApiResponse(true, 
-                String.format("导入完成，导入: %d, 跳过: %d", importedCount, skippedCount),
-                Map.of("imported", importedCount, "skipped", skippedCount));
+            Map<String, Object> data = new HashMap<String, Object>();
+                data.put("imported", importedCount);
+                data.put("skipped", skippedCount);
+                return new ApiResponse(true,
+                String.format("导入完成，导入: %d, 跳过: %d", importedCount, skippedCount), data);
                 
         } catch (Exception e) {
             return new ApiResponse(false, "导入失败: " + e.getMessage(), null);

@@ -121,7 +121,6 @@ CREATE TABLE `employee_tag` (
   PRIMARY KEY (`id`),
   KEY `idx_employee_id` (`employee_id`),
   KEY `idx_tag_code` (`tag_code`),
-  KEY `idx_dimension` (`dimension`),),
   KEY `idx_tag_code` (`tag_code`),
   KEY `idx_dimension` (`dimension`),
   KEY `idx_source` (`source`),

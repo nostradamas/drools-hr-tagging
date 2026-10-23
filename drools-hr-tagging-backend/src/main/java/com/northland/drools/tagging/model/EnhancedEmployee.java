@@ -265,6 +265,6 @@ public class EnhancedEmployee {
     public List<EmployeeTag> getTagsByDimension(String dimension) {
         return currentTags.stream()
                 .filter(tag -> dimension.equals(tag.getDimension()) && tag.isActive() && !tag.isExpired())
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
     }
 }
