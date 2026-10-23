@@ -7,6 +7,19 @@
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- 规则引擎启动失败：DRL 引用不存在的 `yearsOfExperience` 属性，更正为 `workExperience`（#1）
+- KieSession 生命周期重构：移除单例 session bean，统一为每请求新建 + dispose；修复 RuleServiceImpl 注入不存在的 KieBase bean（#2）
+- CORS：`addAllowedOrigin("*")` 与 `allowCredentials=true` 冲突改为 `addAllowedOriginPattern`（#3）
+- MyBatis-Plus lambda 引用不存在属性导致标签查询崩溃，删除实体兼容 getter（#4）
+- JDK8 兼容：`Map.of`/`Stream.toList` 替换为 JDK8 API，compiler 启用 `release=8` 强制校验；修复建表 SQL 语法错误（#5）
+
+### Changed
+- 响应封套统一为 ApiResponse，删除 Result；移除 matching 模块重复端点 `/match`、`/batch-match`（#6）
+- README 移除 Monaco Editor 失实声明；清理死代码 api/batch.js 与空目录；CI 流水线暂不启用（#6）
+
 ## [1.0.0] - 2025-06-01
 
 ### 新增

@@ -81,8 +81,9 @@ Controller → Service → (Drools KieSession + MyBatis Mapper) → Entity/Model
    - `matching/model/Employee.java` ≠ `entity/Employee.java`，DRL 只认 matching 包的
 2. **KieSession 必须 dispose** — 每次用完调用 `session.dispose()`，否则内存泄漏
 3. **动态规则用 KieFileSystem 编译** — 不用 `kie-spring` XML 方式
-4. **标签过期策略**：考评 6 月、能力 1 年、履历 2 年
-5. **匹配分数累加制**：基础 0 分，各项规则累加，上限 100，不设扣分
+4. **KieSession 每请求新建** — IoC 只暴露 KieContainer 单例，session 用完必须 dispose
+5. **标签过期策略**：考评 6 月、能力 1 年、履历 2 年
+6. **匹配分数累加制**：基础 0 分，各项规则累加，上限 100，不设扣分
 
 ## 模块说明（backup 迁移整合）
 - `tagging/controller/EmployeeController` 等员工 CRUD —— 来自旧 test 后端，API 前缀 `/api/employees`
@@ -93,4 +94,3 @@ Controller → Service → (Drools KieSession + MyBatis Mapper) → Entity/Model
 ## 已知陷阱
 - `RuleTemplateService` 的 `generateCompositeRule` 当前为骨架代码，COMPOSITE 模板未完全实现
 - `employee-tagging-rules.drl` 中的 `skills` 字段引用的是 `matching.model.Employee` 的 `List<String> skills`，不是 `entity.Employee` 的 `technicalSkills`
-- `GlobalConfig.java` 中 `setAllowCredentials(true)` 与 `addAllowedOrigin("*")` 冲突（低版本 Spring Boot 下不影响）

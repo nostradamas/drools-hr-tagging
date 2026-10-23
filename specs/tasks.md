@@ -9,10 +9,10 @@
 - [x] CONTRIBUTING.md / CHANGELOG.md
 - [x] CI 流水线配置
 
-## Phase 2: 实体去重与模型统一
-- [ ] 统一 entity 包（DB 持久化层）
-- [ ] 保持 tagging.model 包（Drools 工作内存层）
-- [ ] 确认双包没有字段不一致的问题
+## Phase 2: 实体去重与模型统一（已完成）
+- [x] 统一 entity 包（DB 持久化层）
+- [x] 保持 tagging.model 包（Drools 工作内存层）
+- [x] 确认双包没有字段不一致的问题
 
 ## Phase 3: 规则引擎增强
 - [ ] CUSTOM 模板完整实现
