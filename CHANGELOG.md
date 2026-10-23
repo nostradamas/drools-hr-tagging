@@ -7,71 +7,45 @@
 
 ---
 
-## [Unreleased]
+## [1.0.0] - 2026-10-23
 
-### Fixed
-- 规则引擎启动失败：DRL 引用不存在的 `yearsOfExperience` 属性，更正为 `workExperience`（#1）
-- KieSession 生命周期重构：移除单例 session bean，统一为每请求新建 + dispose；修复 RuleServiceImpl 注入不存在的 KieBase bean（#2）
-- CORS：`addAllowedOrigin("*")` 与 `allowCredentials=true` 冲突改为 `addAllowedOriginPattern`（#3）
-- MyBatis-Plus lambda 引用不存在属性导致标签查询崩溃，删除实体兼容 getter（#4）
-- JDK8 兼容：`Map.of`/`Stream.toList` 替换为 JDK8 API，compiler 启用 `release=8` 强制校验；修复建表 SQL 语法错误（#5）
+首次公开发布。基于企业内部验证过的 Drools 落地实践整理而成，发布前已完成一轮框架审查修复（详见下方 Fixed）。
 
-### Changed
-- 响应封套统一为 ApiResponse，删除 Result；移除 matching 模块重复端点 `/match`、`/batch-match`（#6）
-- README 移除 Monaco Editor 失实声明；清理死代码 api/batch.js 与空目录；CI 流水线暂不启用（#6）
-
-## [1.0.0] - 2025-06-01
-
-### 新增
+### 新增 / Added
 
 #### 规则管理 (Rule Management)
-- 支持规则的在线创建、编辑、删除、查询
-- 集成 Monaco Editor 提供规则语法高亮和自动补全
-- 规则模板引擎，支持通过预定义模板快速生成规则
-- 规则启用/停用状态管理
-- 规则版本管理，支持版本历史查看与回滚
-- 规则分类与标签化管理
-
-#### 标签库 (Tag Library)
-- 标签 CRUD 操作
-- 标签分类与层级管理（父子标签、标签分组）
-- 标签统计功能，查看每个标签的员工覆盖情况
-- 标签导入/导出
+- 规则在线 CRUD、启用/停用、批量操作、导入导出
+- 7 种规则模板引擎（经验/技能/绩效/学历/领导力/复合/自定义），条件配置表单生成 DRL，支持在线预览与语法校验
+- 动态规则编译与热加载（KieFileSystem + KieContainer 刷新）
+- 规则执行统计与默认规则一键初始化
 
 #### 员工自动打标 (Employee Auto-Tagging)
-- 基于 Drools 规则引擎的多维度自动标签计算
-  - 技能维度：技术栈、语言、工具等
-  - 经验维度：工作年限、项目经验、行业领域
-  - 职级维度：当前职级、晋升潜力
-  - 绩效维度：历史绩效评级、绩效趋势
-- 员工信息变更时自动触发规则重算
-- 批量打标处理
-- 打标历史记录追溯
+- 基于 Drools 的多维度自动打标：能力（技能/领导力/沟通/创新）、履历（年限/学历/行业/项目）、考评（绩效/潜力/协作/趋势）
+- 标签生命周期管理：按维度自动过期（考评 6 个月 / 能力 1 年 / 履历 2 年）、置信度评估、来源追溯（规则引擎/手动/系统）
+- 批量打标与标签统计分析、培训推荐
 
 #### 岗位匹配 (Position Matching)
-- 基于标签的技能匹配算法
-- 工作年限与领域经验匹配
-- 学历与专业要求匹配
-- 多维度加权综合评分
-- 候选人智能推荐排序
-- 匹配结果明细展示
+- 五维评分规则（技能/经验/学历/薪资期望/管理经验），0-100 分制
+- 单人单岗、单人多岗、多人单岗、批量匹配四类 API，按匹配分排序与推荐筛选
 
-#### 系统基础 (System Foundation)
-- Spring Boot 2.7.0 项目框架搭建
-- MyBatis-Plus 3.5.3 持久层集成
-- Drools 7.73.0 规则引擎集成与自动配置
-- 统一响应结果封装
-- 全局异常处理
-- CORS 跨域配置
-- MySQL 5.7 数据库初始化脚本
-- 统一日志框架集成
+#### 数据与接口 (Data & API)
+- 7 张表建库脚本（含演示数据）：employee / tag / employee_tag / tag_rule / tag_category / rule_template / tag_change_history
+- 员工、标签、标签分类的 MyBatis-Plus 分页 CRUD
+- 统一响应封套 ApiResponse 与全局异常处理
 
 #### 前端 (Frontend)
-- Vue 2.6 + Element UI 后台管理界面
-- Vue Router 路由管理
-- 规则管理页面：规则列表、规则编辑器、规则详情
-- 标签管理页面：标签分类树、标签列表、标签统计
-- 员工管理页面：员工列表、标签详情、打标历史
-- 岗位匹配页面：匹配条件配置、匹配结果展示
-- Axios HTTP 请求封装
-- 响应式布局适配
+- Vue 2.6 + Element UI 管理界面，5 个功能模块：仪表盘 / 标签库管理 / 规则管理 / 员工标签 / 统计分析
+- 全部页面与后端真实 API 串通（无 Mock 数据）
+
+#### 工程基础 (Engineering)
+- Maven 多模块结构，编译目标 JDK 8（`release=8` 编译期 API 边界校验）
+- Apache-2.0 LICENSE、中英双语 README、CONTRIBUTING、Issue 模板、specs 规格文档（需求/设计/任务/验收）
+
+### 修复 / Fixed（发布前框架审查，#1~#8）
+- DRL 引用不存在的实体属性导致启动失败，更正为 `workExperience`（#1）
+- KieSession 生命周期重构：仅暴露 KieContainer 单例，session 每请求新建 + dispose（#2）
+- CORS 通配符源与凭据模式冲突改为 `addAllowedOriginPattern`（#3）
+- MyBatis-Plus lambda 引用不存在属性导致标签查询崩溃（#4）
+- JDK9+ API 误用替换为 JDK8 API；建表 SQL 括号错配修复（#5）
+- 响应封套统一、冗余端点与死代码清理（#6）
+- README/CHANGELOG 与代码全面对齐，`vue.config.js` 补 9528 端口配置（#8）

@@ -35,12 +35,12 @@
 - **动态规则 CRUD**: 在线创建、编辑、启用/停用 Drools 规则
 - **在线编辑**: 规则模板 + 条件配置表单快速生成 DRL，支持在线预览与语法校验
 - **模板引擎**: 预定义规则模板，快速生成标准化规则
-- **版本管理**: 规则版本溯源与回滚
+- **规则统计**: 规则执行次数、模板分布统计与默认规则一键初始化
 
 ### 员工标签 / Employee Tagging
 - **多维度自动打标**: 基于 Drools 规则引擎，从技能、经验、职级、绩效等多维度自动为员工打标
-- **自定义标签规则**: 业务人员可通过可视化界面自定义打标逻辑
-- **实时计算**: 员工信息变更时实时触发规则重算
+- **自定义标签规则**: 7 种规则模板（经验/技能/绩效/学历/领导力/复合/自定义）在线配置生成 DRL
+- **标签生命周期**: 按维度自动过期（考评 6 月 / 能力 1 年 / 履历 2 年）与置信度评估
 
 ### 岗位匹配 / Position Matching
 - **技能匹配**: 基于技能标签库进行精准匹配
@@ -50,8 +50,8 @@
 
 ### 标签库 / Tag Library
 - **可管理标签系统**: 支持标签的增删改查、分类管理
-- **标签层级**: 支持父子标签、标签分组
-- **标签统计**: 查看每个标签的员工覆盖率
+- **标签维度**: 能力(ABILITY) / 履历(EXPERIENCE) / 考评(EVALUATION) 三维度 15 分类
+- **标签统计**: 维度/分类分布统计，支持导入导出
 
 ---
 
@@ -105,110 +105,85 @@
 
 ```bash
 # 1. 克隆项目 / Clone the repository
-git clone https://github.com/your-org/drools-rule-engine-hr.git
-cd drools-rule-engine-hr
+git clone https://github.com/nostradamas/drools-hr-tagging.git
+cd drools-hr-tagging
 
-# 2. 创建数据库 / Create the database
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS drools_hr DEFAULT CHARSET utf8mb4;"
+# 2. 初始化数据库 / Initialize the database (脚本自动建库建表)
+mysql -u root -p < database/create_tables.sql
 
-# 3. 修改数据库配置 / Modify database configuration
-#    编辑 application.properties 中的数据库连接信息
-#    Edit datasource settings in application.properties
+# 3. 修改数据库配置 / Configure the datasource
+#    编辑 drools-hr-tagging-backend/src/main/resources/application.properties
+#    密码默认读取环境变量 DB_PASSWORD，本机默认 root
+#    Edit datasource settings; password comes from env DB_PASSWORD (default: root)
 
-# 4. 启动后端 / Start the backend
-mvn spring-boot:run
+# 4. 启动后端 / Start the backend (端口 8080)
+mvn spring-boot:run -f drools-hr-tagging-backend/pom.xml
 
-# 5. 启动前端 / Start the frontend (新开终端 / new terminal)
-cd frontend
+# 5. 启动前端 / Start the frontend (新开终端 / new terminal, 端口 9528)
+cd drools-hr-tagging-frontend
 npm install
-npm run serve
+npm run dev
 ```
 
-访问 / Access: http://localhost:8080 (后端 / Backend) | http://localhost:9528 (前端 / Frontend)
+访问 / Access: http://localhost:9528 (前端 / Frontend) | http://localhost:8080/api (后端 / Backend)
+
+> 数据库默认连接 `localhost:3306/employee_tagging`，账号 root，密码取环境变量 `DB_PASSWORD`（默认 root）。
+
 
 ---
 
 ## API 概览 / API Overview
 
-| 分组 / Group               | 端点 / Endpoint                   | 说明 / Description                           |
-|---------------------------|-----------------------------------|----------------------------------------------|
-| 规则管理 / Rule Management | `/api/rules/**`                   | 规则的 CRUD、发布、回滚                        |
-| 标签库 / Tag Library       | `/api/tags/**`                    | 标签分类、标签 CRUD、标签统计                 |
-| 增强打标 / Enhanced Tagging | `/api/enhanced-tags/**`          | 批量打标、规则匹配打标                        |
-| 综合打标 / Integrated Tagging | `/api/integrated-tags/**`      | 多维综合打标、复合规则打标                    |
-| 匹配服务 / Matching        | `/api/matching/**`                | 岗位匹配、候选人推荐、评分明细                 |
-| 系统状态 / System Status   | `/api/system/**`                  | 健康检查、规则引擎状态、缓存统计               |
-
+| 分组 / Group                    | 端点 / Endpoint                          | 说明 / Description              |
+|-------------------------------|------------------------------------------|--------------------------------|
+| 规则管理 / Rule Management     | `/api/rule-management/**`                 | 规则 CRUD、启停、模板、验证、导入导出        |
+| 标签库 / Tag Library           | `/api/tag-library-management/**`          | 标签 CRUD、分类、统计、导入导出             |
+| 员工标签 / Employee Tagging    | `/api/enhanced-tagging/**`                | 单个/批量自动打标、标签统计、培训推荐       |
+| 综合打标 / Integrated Tagging  | `/api/integrated-tagging/**`              | 动态规则打标、系统状态检查                 |
+| 岗位匹配 / Position Matching   | `/api/matching/**`                        | 单人/批量匹配、推荐筛选、演示数据           |
+| 员工与标签维护 / CRUD          | `/api/employees/**`、`/api/tags/**`、`/api/tag-categories/**` | 员工、标签、标签分类分页 CRUD |
 ---
 
 ## 项目结构 / Directory Structure
 
 ```
-drools-rule-engine-hr/
-├── README.md                          # 项目说明文档
-├── LICENSE                            # Apache 2.0 许可证
-├── CHANGELOG.md                       # 变更日志
-├── CONTRIBUTING.md                    # 贡献指南
-├── .editorconfig                      # 编辑器配置
-├── .gitignore                         # Git 忽略规则
-├── pom.xml                            # Maven 父 POM
-├── sql/                               # 数据库初始化脚本
-│   └── init.sql
-├── src/
-│   ├── main/
-│   │   ├── java/com/drools/hr/
-│   │   │   ├── HrApplication.java              # 启动类
-│   │   │   ├── config/                          # 配置类
-│   │   │   │   ├── DroolsConfig.java            # Drools 引擎配置
-│   │   │   │   ├── MyBatisPlusConfig.java       # MyBatis-Plus 配置
-│   │   │   │   └── CorsConfig.java              # 跨域配置
-│   │   │   ├── controller/                      # REST 控制器
-│   │   │   │   ├── RuleController.java
-│   │   │   │   ├── TagController.java
-│   │   │   │   ├── EmployeeTagController.java
-│   │   │   │   ├── MatchingController.java
-│   │   │   │   └── SystemController.java
-│   │   │   ├── service/                         # 业务逻辑层
-│   │   │   │   ├── RuleService.java
-│   │   │   │   ├── TagService.java
-│   │   │   │   ├── TaggingService.java
-│   │   │   │   └── MatchingService.java
-│   │   │   ├── entity/                          # 实体类
-│   │   │   │   ├── Rule.java
-│   │   │   │   ├── Tag.java
-│   │   │   │   ├── Employee.java
-│   │   │   │   └── EmployeeTag.java
-│   │   │   ├── mapper/                          # MyBatis-Plus Mapper
-│   │   │   ├── dto/                             # 数据传输对象
-│   │   │   ├── vo/                              # 视图对象
-│   │   │   └── common/                          # 公共工具
-│   │   │       ├── Result.java                  # 统一响应
-│   │   │       └── BaseEntity.java              # 实体基类
-│   │   └── resources/
-│   │       ├── application.properties           # 主配置
-│   │       ├── application-dev.properties       # 开发环境配置
-│   │       ├── rules/                           # Drools 规则文件 (.drl)
-│   │       │   ├── tagging/                     # 标签规则
-│   │       │   └── matching/                    # 匹配规则
-│   │       └── mapper/                          # XML Mapper
-│   └── test/
-│       └── java/com/drools/hr/
-│           ├── service/                         # 服务层测试
-│           └── rule/                            # 规则单元测试
-├── frontend/
-│   ├── src/
-│   │   ├── views/
-│   │   │   ├── rule/                            # 规则管理页面
-│   │   │   ├── tag/                             # 标签管理页面
-│   │   │   ├── employee/                        # 员工管理页面
-│   │   │   └── matching/                        # 岗位匹配页面
-│   │   ├── router/
-│   │   ├── store/
-│   │   ├── api/                                 # API 接口封装
-│   │   └── utils/
-│   └── package.json
-└── docs/                                        # 项目文档
+drools-hr-tagging/
+├── pom.xml                              # Maven 父 POM（多模块）
+├── drools-hr-tagging-backend/           # 后端模块（Spring Boot 2.7 + Drools 7.73）
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/northland/drools/
+│       │   ├── DroolsApplication.java   # 启动类
+│       │   ├── common/                  # 公共层：config / exception / response(ApiResponse)
+│       │   ├── entity/                  # MyBatis-Plus 实体（Employee/Tag/TagCategory/TagRule/RuleTemplate/EmployeeTag/ProjectExperience）
+│       │   ├── mapper/                  # MyBatis-Plus Mapper
+│       │   ├── matching/                # 岗位匹配：controller / model(Employee,Position,MatchingResult) / service
+│       │   │   └── config/DroolsConfig.java   # KieContainer 装配，启动时编译 3 份 DRL
+│       │   └── tagging/                 # 标签系统：controller / model(EnhancedEmployee,Tag,TagRule...) / service
+│       │       ├── service/impl/        # 员工、标签、分类、规则模板业务实现
+│       │       └── model/dto/           # RuleExecuteResult / RuleValidateResult
+│       └── resources/
+│           ├── application.properties   # 主配置（密码走环境变量 DB_PASSWORD）
+│           └── rules/                   # DRL 规则
+│               ├── employee-tagging-rules.drl          # 经验/技能打标规则
+│               ├── enhanced-employee-tagging-rules.drl # 增强打标规则
+│               └── position-matching-rules.drl         # 五维匹配评分规则
+├── drools-hr-tagging-frontend/          # 前端模块（Vue 2.6 + Element UI）
+│   ├── package.json
+│   ├── vue.config.js                    # devServer 端口 9528
+│   └── src/
+│       ├── views/                       # Dashboard / TagLibrary / RuleManagement / EmployeeTagging / Statistics
+│       ├── components/Layout/           # 侧边栏布局
+│       ├── api/                         # Axios 接口封装
+│       ├── router/ · store/ · utils/
+│       └── assets/
+├── database/create_tables.sql           # 建库建表 + 演示数据脚本
+├── docs/ · specs/                       # 开发文档 / 规格说明（需求·设计·任务·验收）
+├── AGENTS.md                            # AI 协作说明（架构约束、已知陷阱）
+└── README.md · LICENSE · CHANGELOG.md · CONTRIBUTING.md
 ```
+
+> 测试用例尚未补齐（`src/test` 为空），欢迎 PR 补充——这是当前最欢迎的贡献方向。```
 
 ---
 
