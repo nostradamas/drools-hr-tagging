@@ -10,6 +10,7 @@
 ## [Unreleased]
 
 ### Fixed
+- 规则管理安全与模板引擎校验（#14）：规则管理写接口（POST/PUT/DELETE `/api/rule-management/**`）新增 Spring Security 管理员认证（HTTP Basic，账号走环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD`），CORS 由通配 `*`+凭据收紧为配置白名单（`CORS_ALLOWED_ORIGINS`）；`RuleTemplateService.validateRule` 由字符串包含检查改为 KieBuilder 真实编译校验；复合模板在无有效条件时拒绝生成空 when 规则；条件中的技能/学历数组改为类型安全解析，修复 `(String[])` 强转的 ClassCastException，并对拼入 DRL 的字符串做转义、运算符加白名单
 - 打标规则三重缺陷：静态 DRL 类型不匹配导致规则静默不生效、档位区间重叠产生矛盾标签、双文件重复打标（#10）
 - 规则产出标签此前仅 println，现由服务层统一批量落库 employee_tag 表（演示场景无主键时仅内存返回）（#10）
 

@@ -129,6 +129,8 @@ npm run dev
 
 > 数据库默认连接 `localhost:3306/employee_tagging`，账号 root，密码取环境变量 `DB_PASSWORD`（默认 root）。
 
+> **安全配置 / Security**：规则管理写接口（POST/PUT/DELETE `/api/rule-management/**`，含提交/编译 DRL）要求管理员认证（HTTP Basic），用户名取环境变量 `ADMIN_USERNAME`（默认 `admin`），密码取 `ADMIN_PASSWORD`（未设置时启动日志会打印一次性随机密码，生产环境务必显式设置）；其余只读/演示接口不要求认证。CORS 不再使用通配来源，允许名单取环境变量 `CORS_ALLOWED_ORIGINS`（逗号分隔，默认 `http://localhost:9528,http://localhost:8080`）。
+
 ### 运行测试 / Running Tests
 
 ```bash
@@ -138,9 +140,9 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 11)   # macOS 示例 / macOS exampl
 mvn clean test -f drools-hr-tagging-backend/pom.xml
 ```
 
-当前 10 个测试用例：规则层 5 例（DRL 可编译、经验/绩效档位互斥、标签来源/原因/过期时间、无重复打标）+ 服务层 5 例（落库过滤条件、字段映射、旧标签失效顺序）。JDK 21+ 仅可编译（`mvn compile`），无法运行规则引擎。
+当前 17 个测试用例：规则层 5 例（DRL 可编译、经验/绩效档位互斥、标签来源/原因/过期时间、无重复打标）+ 服务层 5 例（落库过滤条件、字段映射、旧标签失效顺序）+ 模板服务 7 例（#14：真实编译校验、复合规则空条件拒绝、技能/学历数组条件生成）。JDK 21+ 仅可编译（`mvn compile`），无法运行规则引擎。
 
-10 test cases in total: 5 rule-layer (DRL compiles, exclusive experience/performance ladders, tag provenance & dedup) + 5 service-layer (persistence filtering, field mapping, deactivate-then-save ordering). On JDK 21+ only compilation works; the rule engine cannot run.
+17 test cases in total: 5 rule-layer (DRL compiles, exclusive experience/performance ladders, tag provenance & dedup) + 5 service-layer (persistence filtering, field mapping, deactivate-then-save ordering) + 7 template-service (#14: real compilation validation, empty composite conditions rejected, skill/education array conditions). On JDK 21+ only compilation works; the rule engine cannot run.
 
 
 ---

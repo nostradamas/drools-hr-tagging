@@ -18,7 +18,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/rule-management")
-@CrossOrigin(origins = "*")
 public class RuleManagementController {
     
     @Autowired
