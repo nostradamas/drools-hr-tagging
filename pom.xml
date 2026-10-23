@@ -80,8 +80,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.13.0</version>
                     <configuration>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+                        <!-- release 会在编译期校验 JDK8 API 边界，防止误用 JDK9+ API -->
+                        <release>8</release>
                         <proc>full</proc>
                         <annotationProcessorPaths>
                             <path>

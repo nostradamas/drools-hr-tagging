@@ -204,7 +204,7 @@ public class IntegratedTaggingController {
         for (EnhancedEmployee employee : employees) {
             List<EmployeeTag> activeTags = employee.getCurrentTags().stream()
                     .filter(tag -> tag.isActive() && !tag.isExpired())
-                    .toList();
+                    .collect(java.util.stream.Collectors.toList());
             
             employeeTagCounts.put(employee.getName(), activeTags.size());
             
