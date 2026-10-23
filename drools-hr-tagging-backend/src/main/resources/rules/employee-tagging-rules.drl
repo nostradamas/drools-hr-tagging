@@ -1,86 +1,169 @@
 package rules
 
-import com.northland.drools.matching.model.Employee
+import com.northland.drools.tagging.model.EnhancedEmployee
+import com.northland.drools.tagging.model.EmployeeTag
+import com.northland.drools.tagging.model.Tag
+import com.northland.drools.tagging.service.TagLibraryService
 
-// 高级开发者标签规则
-rule "Tag Senior Developer"
+global TagLibraryService tagLibraryService
+
+/*
+ * 员工打标规则（履历维度为主）。
+ * 约定：
+ * 1. 所有档位规则使用互斥区间，同一维度内单命中，避免矛盾标签；
+ * 2. 统一经 assignTag() 落到 currentTags（RULE_ENGINE 来源），由服务层批量持久化；
+ * 3. 标签 code 必须存在于 TagLibraryService 初始化库中。
+ * 与 enhanced-employee-tagging-rules.drl（考评维度）分工，避免重复打标。
+ */
+
+// 标签分配函数：校验标签存在 + 同标签去重
+function void assignTag(TagLibraryService lib, EnhancedEmployee emp, String tagCode, double confidence, String reason) {
+    Tag tag = lib.getTagByCode(tagCode);
+    if (tag != null && !emp.hasTag(tagCode)) {
+        emp.addTag(new EmployeeTag(emp.getId(), tag, confidence, "RULE_ENGINE", reason));
+    }
+}
+
+// ============ 经验档位（互斥区间，10/5/3/1 为界） ============
+
+rule "经验档位-资深专家(10年+)"
+    salience 50
     when
-        $employee : Employee(workExperience >= 5)
+        $e : EnhancedEmployee(experienceInfo.totalWorkYears >= 10)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：高级开发者");
+        assignTag(tagLibraryService, $e, "VETERAN_10PLUS", 0.9, "总工作年限 " + $e.getExperienceInfo().getTotalWorkYears() + " 年");
 end
 
-// 初级开发者标签规则
-rule "Tag Junior Developer"
+rule "经验档位-高级(5-10年)"
+    salience 50
     when
-        $employee : Employee(workExperience < 2)
+        $e : EnhancedEmployee(experienceInfo.totalWorkYears >= 5 && experienceInfo.totalWorkYears < 10)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：初级开发者");
+        assignTag(tagLibraryService, $e, "SENIOR_5TO10", 0.8, "总工作年限 " + $e.getExperienceInfo().getTotalWorkYears() + " 年");
 end
 
-// 中级开发者标签规则
-rule "Tag Mid-level Developer"
+rule "经验档位-中级(3-5年)"
+    salience 50
     when
-        $employee : Employee(workExperience >= 2 && workExperience < 5)
+        $e : EnhancedEmployee(experienceInfo.totalWorkYears >= 3 && experienceInfo.totalWorkYears < 5)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：中级开发者");
+        assignTag(tagLibraryService, $e, "MID_3TO5", 0.6, "总工作年限 " + $e.getExperienceInfo().getTotalWorkYears() + " 年");
 end
 
-// 技术专家标签规则
-rule "Tag Technical Expert"
+rule "经验档位-初级(1-3年)"
+    salience 50
     when
-        $employee : Employee(workExperience >= 8)
+        $e : EnhancedEmployee(experienceInfo.totalWorkYears >= 1 && experienceInfo.totalWorkYears < 3)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：技术专家");
+        assignTag(tagLibraryService, $e, "JUNIOR_1TO3", 0.4, "总工作年限 " + $e.getExperienceInfo().getTotalWorkYears() + " 年");
 end
 
-// 管理潜质标签规则
-rule "Tag Management Potential"
+rule "经验档位-应届(<1年)"
+    salience 50
     when
-        $employee : Employee(workExperience >= 3)
+        $e : EnhancedEmployee(experienceInfo.totalWorkYears < 1)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：管理潜质");
+        assignTag(tagLibraryService, $e, "FRESH_GRAD", 0.2, "总工作年限 " + $e.getExperienceInfo().getTotalWorkYears() + " 年");
 end
 
-// 全栈开发者标签规则
-rule "Tag Full Stack Developer"
+// ============ 学历档位（互斥单值） ============
+
+rule "学历-博士"
+    salience 40
     when
-        $employee : Employee(skills contains "Java" && skills contains "JavaScript" &&
-                           skills contains "数据库")
+        $e : EnhancedEmployee(experienceInfo.education == "博士")
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：全栈开发者");
+        assignTag(tagLibraryService, $e, "PHD_DEGREE", 0.9, "最高学历博士");
 end
 
-// 前端专家标签规则
-rule "Tag Frontend Expert"
+rule "学历-硕士"
+    salience 40
     when
-        $employee : Employee((skills contains "React" || skills contains "Vue" || skills contains "Angular") &&
-                           skills contains "JavaScript" && skills contains "CSS")
+        $e : EnhancedEmployee(experienceInfo.education == "硕士")
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：前端专家");
+        assignTag(tagLibraryService, $e, "MASTER_DEGREE", 0.7, "最高学历硕士");
 end
 
-// 后端专家标签规则
-rule "Tag Backend Expert"
+rule "学历-本科"
+    salience 40
     when
-        $employee : Employee((skills contains "Java" || skills contains "Python" || skills contains "Go") &&
-                           skills contains "数据库" && skills contains "微服务")
+        $e : EnhancedEmployee(experienceInfo.education == "本科")
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：后端专家");
+        assignTag(tagLibraryService, $e, "BACHELOR_DEGREE", 0.5, "最高学历本科");
 end
 
-// 高潜力员工标签规则 - 已移除对不存在属性的引用
-rule "Tag High Potential"
+// ============ 技能组合（语义可共存，并行打标） ============
+
+rule "技能-全栈开发者"
+    salience 30
     when
-        $employee : Employee(workExperience >= 2)
+        $e : EnhancedEmployee()
+        eval($e.getAbilityInfo().getTechnicalSkills().contains("Java")
+            && $e.getAbilityInfo().getTechnicalSkills().contains("JavaScript")
+            && $e.getAbilityInfo().getTechnicalSkills().contains("数据库"))
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：高潜力员工");
+        assignTag(tagLibraryService, $e, "FULLSTACK_DEV", 0.8, "具备 Java+JavaScript+数据库 全栈技能");
 end
 
-// 需要培训标签规则
-rule "Tag Needs Training"
+rule "技能-前端专家"
+    salience 30
     when
-        $employee : Employee(workExperience >= 1)
+        $e : EnhancedEmployee()
+        eval($e.getAbilityInfo().getTechnicalSkills().contains("JavaScript")
+            && ($e.getAbilityInfo().getTechnicalSkills().contains("React")
+                || $e.getAbilityInfo().getTechnicalSkills().contains("Vue")))
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：需要培训");
+        assignTag(tagLibraryService, $e, "FRONTEND_EXPERT", 0.8, "具备主流前端框架技能");
+end
+
+rule "技能-后端专家"
+    salience 30
+    when
+        $e : EnhancedEmployee()
+        eval(($e.getAbilityInfo().getTechnicalSkills().contains("Java")
+                || $e.getAbilityInfo().getTechnicalSkills().contains("Python"))
+            && $e.getAbilityInfo().getTechnicalSkills().contains("微服务"))
+    then
+        assignTag(tagLibraryService, $e, "BACKEND_EXPERT", 0.8, "具备后端语言与微服务技能");
+end
+
+// ============ 领导力（高门槛优先，低门槛排他） ============
+
+rule "领导力-强领导力"
+    salience 21
+    when
+        $e : EnhancedEmployee(abilityInfo.leadershipScore >= 85,
+                              experienceInfo.managementYears >= 3,
+                              experienceInfo.teamSize >= 5)
+    then
+        assignTag(tagLibraryService, $e, "STRONG_LEADER", 0.9, "领导力 " + $e.getAbilityInfo().getLeadershipScore()
+                + "，管理 " + $e.getExperienceInfo().getManagementYears() + " 年");
+end
+
+rule "领导力-潜在领导者"
+    salience 20
+    when
+        $e : EnhancedEmployee(abilityInfo.leadershipScore >= 70 && abilityInfo.leadershipScore < 85)
+    then
+        assignTag(tagLibraryService, $e, "POTENTIAL_LEADER", 0.7, "领导力 " + $e.getAbilityInfo().getLeadershipScore() + "，具备培养空间");
+end
+
+// ============ 创新能力 ============
+
+rule "创新-创新者"
+    salience 20
+    when
+        $e : EnhancedEmployee(abilityInfo.innovationScore >= 85)
+    then
+        assignTag(tagLibraryService, $e, "INNOVATOR", 0.9, "创新能力评分 " + $e.getAbilityInfo().getInnovationScore());
+end
+
+// ============ 潜力（绩效/改进判定归 enhanced 文件的考评维度，此处不重复） ============
+
+rule "潜力-高潜力"
+    salience 10
+    when
+        $e : EnhancedEmployee(evaluationInfo.potentialRating >= 4)
+    then
+        assignTag(tagLibraryService, $e, "HIGH_POTENTIAL", 0.9, "潜力评级 " + $e.getEvaluationInfo().getPotentialRating() + "/5");
 end

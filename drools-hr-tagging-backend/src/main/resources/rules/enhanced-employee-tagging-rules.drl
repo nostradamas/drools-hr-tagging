@@ -1,27 +1,96 @@
 package rules
 
-import com.northland.drools.matching.model.Employee
+import com.northland.drools.tagging.model.EnhancedEmployee
+import com.northland.drools.tagging.model.EmployeeTag
+import com.northland.drools.tagging.model.Tag
+import com.northland.drools.tagging.service.TagLibraryService
 
-// 高级开发者标签规则
-rule "高级开发者标签"
+global TagLibraryService tagLibraryService
+
+/*
+ * 增强打标规则（考评维度）。
+ * 与 employee-tagging-rules.drl（履历维度）分工，避免重复打标；
+ * 绩效档位互斥区间：>=90 顶尖 / 80-89 高 / 70-79 良好 / 60-69 一般 / <60 需改进。
+ */
+
+// 标签分配函数：校验标签存在 + 同标签去重
+function void assignEvalTag(TagLibraryService lib, EnhancedEmployee emp, String tagCode, double confidence, String reason) {
+    Tag tag = lib.getTagByCode(tagCode);
+    if (tag != null && !emp.hasTag(tagCode)) {
+        emp.addTag(new EmployeeTag(emp.getId(), tag, confidence, "RULE_ENGINE", reason));
+    }
+}
+
+// ============ 绩效档位（互斥区间） ============
+
+rule "绩效档位-顶尖绩效(>=90)"
+    salience 60
     when
-        $employee : Employee(workExperience >= 5)
+        $e : EnhancedEmployee(evaluationInfo.currentPerformanceScore >= 90)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：高级开发者");
+        assignEvalTag(tagLibraryService, $e, "TOP_PERFORMER", 1.0, "绩效 " + $e.getEvaluationInfo().getCurrentPerformanceScore() + " 分");
 end
 
-// 中级开发者标签规则
-rule "中级开发者标签"
+rule "绩效档位-高绩效(80-89)"
+    salience 60
     when
-        $employee : Employee(workExperience >= 2 && workExperience < 5)
+        $e : EnhancedEmployee(evaluationInfo.currentPerformanceScore >= 80 &&
+                              evaluationInfo.currentPerformanceScore < 90)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：中级开发者");
+        assignEvalTag(tagLibraryService, $e, "HIGH_PERFORMER", 0.9, "绩效 " + $e.getEvaluationInfo().getCurrentPerformanceScore() + " 分");
 end
 
-// 初级开发者标签规则
-rule "初级开发者标签"
+rule "绩效档位-良好绩效(70-79)"
+    salience 60
     when
-        $employee : Employee(workExperience < 2)
+        $e : EnhancedEmployee(evaluationInfo.currentPerformanceScore >= 70 &&
+                              evaluationInfo.currentPerformanceScore < 80)
     then
-        System.out.println("员工 " + $employee.getName() + " 被标记为：初级开发者");
+        assignEvalTag(tagLibraryService, $e, "GOOD_PERFORMER", 0.7, "绩效 " + $e.getEvaluationInfo().getCurrentPerformanceScore() + " 分");
+end
+
+rule "绩效档位-一般绩效(60-69)"
+    salience 60
+    when
+        $e : EnhancedEmployee(evaluationInfo.currentPerformanceScore >= 60 &&
+                              evaluationInfo.currentPerformanceScore < 70)
+    then
+        assignEvalTag(tagLibraryService, $e, "AVERAGE_PERFORMER", 0.5, "绩效 " + $e.getEvaluationInfo().getCurrentPerformanceScore() + " 分");
+end
+
+rule "绩效档位-需改进(<60)"
+    salience 60
+    when
+        $e : EnhancedEmployee(evaluationInfo.currentPerformanceScore > 0 &&
+                              evaluationInfo.currentPerformanceScore < 60)
+    then
+        assignEvalTag(tagLibraryService, $e, "NEEDS_IMPROVEMENT", 0.3, "绩效 " + $e.getEvaluationInfo().getCurrentPerformanceScore() + " 分");
+end
+
+// ============ 成长趋势 ============
+
+rule "成长-快速成长"
+    salience 55
+    when
+        $e : EnhancedEmployee(evaluationInfo.growthTrend == "上升")
+    then
+        assignEvalTag(tagLibraryService, $e, "RAPID_GROWTH", 0.8, "成长趋势上升");
+end
+
+rule "成长-稳定成长"
+    salience 55
+    when
+        $e : EnhancedEmployee(evaluationInfo.growthTrend == "稳定")
+    then
+        assignEvalTag(tagLibraryService, $e, "STABLE_GROWTH", 0.6, "成长趋势稳定");
+end
+
+// ============ 团队协作 ============
+
+rule "协作-协作优秀"
+    salience 55
+    when
+        $e : EnhancedEmployee(evaluationInfo.teamCollaborationScore >= 85)
+    then
+        assignEvalTag(tagLibraryService, $e, "EXCELLENT_COLLAB", 0.9, "团队协作 " + $e.getEvaluationInfo().getTeamCollaborationScore() + " 分");
 end

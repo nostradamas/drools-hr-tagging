@@ -82,7 +82,6 @@
                     <configuration>
                         <!-- release 会在编译期校验 JDK8 API 边界，防止误用 JDK9+ API -->
                         <release>8</release>
-                        <proc>full</proc>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>
@@ -107,4 +106,25 @@
             </plugins>
         </pluginManagement>
     </build>
+
+  <profiles>
+    <!-- JDK 23+ 默认禁用注解处理器，需显式开启（Lombok 依赖注解处理） -->
+    <profile>
+      <id>jdk-annotation-processing</id>
+      <activation>
+        <jdk>[23,)</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <proc>full</proc>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

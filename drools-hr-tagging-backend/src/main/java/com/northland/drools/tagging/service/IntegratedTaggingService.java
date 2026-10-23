@@ -19,17 +19,20 @@ public class IntegratedTaggingService {
     
     @Autowired
     private DynamicRuleService dynamicRuleService;
-    
+
     @Autowired
     private TagLibraryService tagLibraryService;
-    
+
+    @Autowired
+    private EmployeeTagService employeeTagService;
+
     /**
-     * 使用动态规则给员工打标签
+     * 使用动态规则给员工打标签：规则产出标签后统一持久化
      */
     public EnhancedEmployee tagEmployeeWithDynamicRules(EnhancedEmployee employee) {
         // 清理过期标签
         cleanExpiredTags(employee);
-        
+
         // 清空规则引擎生成的标签
         List<EmployeeTag> tagsToRemove = new ArrayList<EmployeeTag>();
         for (EmployeeTag tag : employee.getCurrentTags()) {
@@ -38,30 +41,35 @@ public class IntegratedTaggingService {
             }
         }
         employee.getCurrentTags().removeAll(tagsToRemove);
-        
+
         // 创建新的KieSession
         KieSession session = dynamicRuleService.createKieSession();
         if (session == null) {
             System.err.println("无法创建KieSession，使用动态规则打标签失败");
             return employee;
         }
-        
+
         try {
             // 插入员工对象
             session.insert(employee);
-            
+
             // 执行所有规则
             int firedRules = session.fireAllRules();
-            
+
             System.out.println("员工 " + employee.getName() + " 动态规则执行完成，触发了 " + firedRules + " 条规则");
-            
-            // 按维度和置信度排序标签
-            sortTagsByDimensionAndConfidence(employee);
-            
         } finally {
             session.dispose();
         }
-        
+
+        // 规则产出的标签批量落库（employeeId 为空的演示场景仅保留内存结果）
+        int persisted = employeeTagService.persistRuleEngineTags(employee);
+        if (persisted > 0) {
+            System.out.println("员工 " + employee.getName() + " 动态规则标签落库 " + persisted + " 条");
+        }
+
+        // 按维度和置信度排序标签
+        sortTagsByDimensionAndConfidence(employee);
+
         return employee;
     }
     

@@ -25,8 +25,11 @@ public class EnhancedEmployeeTaggingService {
     @Autowired
     private TagLibraryService tagLibraryService;
 
+    @Autowired
+    private EmployeeTagService employeeTagService;
+
     /**
-     * 给员工打标签（全维度）
+     * 给员工打标签（全维度）：规则引擎产出标签后统一持久化到 employee_tag 表
      */
     public EnhancedEmployee tagEmployee(EnhancedEmployee employee) {
         // 清理过期标签
@@ -54,6 +57,12 @@ public class EnhancedEmployeeTaggingService {
             kieSession.fireAllRules();
         } finally {
             kieSession.dispose();
+        }
+
+        // 规则产出的标签批量落库（employeeId 为空的演示场景仅保留内存结果）
+        int persisted = employeeTagService.persistRuleEngineTags(employee);
+        if (persisted > 0) {
+            System.out.println("员工 " + employee.getName() + " 规则标签落库 " + persisted + " 条");
         }
 
         // 按维度和优先级排序标签
