@@ -11,6 +11,14 @@ import java.util.List;
  * 员工标签服务接口
  */
 public interface EmployeeTagService extends IService<EmployeeTag> {
+
+    /**
+     * 将规则引擎产生的标签持久化：先失效该员工旧的 RULE_ENGINE 来源标签，再批量保存新标签。
+     *
+     * @param employee 已完成规则打标的员工（currentTags 中 source=RULE_ENGINE 的标签将被保存）
+     * @return 实际落库的标签数量；员工无主键（演示场景）时返回 0，仅保留内存结果
+     */
+    int persistRuleEngineTags(com.northland.drools.tagging.model.EnhancedEmployee employee);
     
     /**
      * 查询员工的标签

@@ -42,7 +42,7 @@
 ```
 
 ## 技术栈硬性约束
-- Java 1.8（目标兼容 JDK 8 ~ 21，当前坚持 1.8 最低门槛）
+- Java 1.8 目标（release=8 编译）；**运行时限 JDK 8 ~ 17**：Drools 7.x 的 MVEL 依赖 java.lang.Compiler，JDK 21+ 被移除会 ClassNotFoundException
 - Spring Boot 2.7.0（不升级 3.x，因 Drools 7.x 对 Jakarta EE 支持有限）
 - Drools 7.73.0.Final（不升级 8.x，保持 javax.* 命名空间兼容）
 - MyBatis-Plus 3.5.3
@@ -92,5 +92,6 @@ Controller → Service → (Drools KieSession + MyBatis Mapper) → Entity/Model
 - 前端未串接后端的 Mock 页面（人才洞察等）已按「保持核心 Drools 功能示例」原则移除
 
 ## 已知陷阱
+- **本机 JDK 26 编译需注意**：根 POM 有 jdk-annotation-processing profile（JDK 23+ 自动启用 -proc:full 跑 Lombok）；跑测试/启动应用请切 JDK 8~17（export JAVA_HOME=...）
 - `RuleTemplateService` 的 `generateCompositeRule` 当前为骨架代码，COMPOSITE 模板未完全实现
 - `employee-tagging-rules.drl` 中的 `skills` 字段引用的是 `matching.model.Employee` 的 `List<String> skills`，不是 `entity.Employee` 的 `technicalSkills`
