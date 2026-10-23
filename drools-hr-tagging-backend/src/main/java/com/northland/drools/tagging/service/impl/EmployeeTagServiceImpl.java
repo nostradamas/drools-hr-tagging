@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,8 +36,8 @@ public class EmployeeTagServiceImpl extends ServiceImpl<EmployeeTagMapper, Emplo
         
         LambdaQueryWrapper<EmployeeTag> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(EmployeeTag::getEmployeeId, employeeId)
-               .eq(EmployeeTag::getActive, true)
-               .eq(EmployeeTag::getExpired, false)
+               .eq(EmployeeTag::getIsActive, true)
+               .and(w -> w.isNull(EmployeeTag::getExpireTime).or().gt(EmployeeTag::getExpireTime, LocalDateTime.now()))
                .orderByDesc(EmployeeTag::getId);
                
         return this.list(wrapper);
@@ -54,8 +55,8 @@ public class EmployeeTagServiceImpl extends ServiceImpl<EmployeeTagMapper, Emplo
             wrapper.eq(EmployeeTag::getDimension, dimension);
         }
         
-        wrapper.eq(EmployeeTag::getActive, true)
-               .eq(EmployeeTag::getExpired, false)
+        wrapper.eq(EmployeeTag::getIsActive, true)
+               .and(w -> w.isNull(EmployeeTag::getExpireTime).or().gt(EmployeeTag::getExpireTime, LocalDateTime.now()))
                .orderByDesc(EmployeeTag::getId);
                
         return this.page(page, wrapper);
@@ -71,9 +72,9 @@ public class EmployeeTagServiceImpl extends ServiceImpl<EmployeeTagMapper, Emplo
         try {
             // 检查是否超过最大标签数
             long currentTagCount = this.count(new LambdaQueryWrapper<EmployeeTag>()
-                    .eq(EmployeeTag::getEmployeeId, employeeId != null ? employeeId : null)
-                    .eq(EmployeeTag::getActive, true)
-                    .eq(EmployeeTag::getExpired, false));
+                    .eq(EmployeeTag::getEmployeeId, employeeId)
+                    .eq(EmployeeTag::getIsActive, true)
+                    .and(w -> w.isNull(EmployeeTag::getExpireTime).or().gt(EmployeeTag::getExpireTime, LocalDateTime.now())));
 
             if (currentTagCount + tags.size() > maxTagsPerEmployee) {
                 log.error("员工标签数量超过限制：{}", maxTagsPerEmployee);
@@ -83,8 +84,7 @@ public class EmployeeTagServiceImpl extends ServiceImpl<EmployeeTagMapper, Emplo
             // 批量保存标签
             for (EmployeeTag tag : tags) {
                 tag.setEmployeeId(employeeId);
-                tag.setActive(true);
-                tag.setExpired(false);
+                tag.setIsActive(true);
             }
             
             return this.saveBatch(tags);
@@ -105,8 +105,8 @@ public class EmployeeTagServiceImpl extends ServiceImpl<EmployeeTagMapper, Emplo
             LambdaUpdateWrapper<EmployeeTag> wrapper = new LambdaUpdateWrapper<>();
             wrapper.eq(EmployeeTag::getEmployeeId, employeeId)
                    .eq(EmployeeTag::getDimension, dimension)
-                   .set(EmployeeTag::getActive, false);
-                   
+                   .set(EmployeeTag::getIsActive, false);
+
             return this.update(wrapper);
         } catch (Exception e) {
             log.error("删除员工标签失败", e);
@@ -119,9 +119,10 @@ public class EmployeeTagServiceImpl extends ServiceImpl<EmployeeTagMapper, Emplo
     public int cleanupExpiredTags() {
         try {
             LambdaUpdateWrapper<EmployeeTag> wrapper = new LambdaUpdateWrapper<>();
-            wrapper.eq(EmployeeTag::getActive, true)
-                   .eq(EmployeeTag::getExpired, true)
-                   .set(EmployeeTag::getActive, false);
+            wrapper.eq(EmployeeTag::getIsActive, true)
+                   .isNotNull(EmployeeTag::getExpireTime)
+                   .lt(EmployeeTag::getExpireTime, LocalDateTime.now())
+                   .set(EmployeeTag::getIsActive, false);
                    
             return this.baseMapper.update(null, wrapper);
         } catch (Exception e) {

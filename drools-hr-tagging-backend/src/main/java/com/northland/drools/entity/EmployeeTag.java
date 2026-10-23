@@ -123,17 +123,4 @@ public class EmployeeTag {
     
     public LocalDateTime getUpdatedTime() { return updatedTime; }
     public void setUpdatedTime(LocalDateTime updatedTime) { this.updatedTime = updatedTime; }
-
-    // ===== 兼容方法（供 ServiceImpl 的 LambdaQueryWrapper 使用）=====
-    public Boolean getActive() { return isActive; }
-    public void setActive(Boolean active) { this.isActive = active; }
-    public Boolean getExpired() { return isExpired(); }
-    public void setExpired(Boolean expired) {
-        // expired 是派生属性：写入时按语义转换
-        if (Boolean.TRUE.equals(expired)) {
-            this.expireTime = java.time.LocalDateTime.now().minusSeconds(1);
-        } else {
-            this.expireTime = null;
-        }
-    }
 }
