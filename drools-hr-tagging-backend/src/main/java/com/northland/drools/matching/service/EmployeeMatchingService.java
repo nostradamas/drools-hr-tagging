@@ -28,13 +28,21 @@ public class EmployeeMatchingService {
         
         try {
             // 插入事实到工作内存
-            session.insert(result);
+            org.kie.api.runtime.rule.FactHandle resultHandle = session.insert(result);
             session.insert(employee);
             session.insert(position);
-            
-            // 触发规则执行
+
+            // 两阶段执行（#18 修复）：评分规则与推荐规则分属不同 agenda-group。
+            // 推荐规则的 LHS 依赖最终 matchScore，而评分规则改分时不 update 事实，
+            // 单阶段 fireAllRules 时推荐规则只按初始 0 分求值，永远落到"不推荐"。
+            // 先聚焦 scoring 组算分，再 update 刷新事实、聚焦 recommendation 组定档。
+            session.getAgenda().getAgendaGroup("scoring").setFocus();
             session.fireAllRules();
-            
+
+            session.update(resultHandle, result);
+            session.getAgenda().getAgendaGroup("recommendation").setFocus();
+            session.fireAllRules();
+
             return result;
         } finally {
             session.dispose();
