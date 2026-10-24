@@ -140,9 +140,9 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 11)   # macOS 示例 / macOS exampl
 mvn clean test -f drools-hr-tagging-backend/pom.xml
 ```
 
-当前 17 个测试用例：规则层 5 例（DRL 可编译、经验/绩效档位互斥、标签来源/原因/过期时间、无重复打标）+ 服务层 5 例（落库过滤条件、字段映射、旧标签失效顺序）+ 模板服务 7 例（#14：真实编译校验、复合规则空条件拒绝、技能/学历数组条件生成）。JDK 21+ 仅可编译（`mvn compile`），无法运行规则引擎。
+当前 22 个测试用例：规则层 5 例（DRL 可编译、经验/绩效档位互斥、标签来源/原因/过期时间、无重复打标）+ 服务层 5 例（落库过滤条件、字段映射、旧标签失效顺序）+ 模板服务 7 例（#14：真实编译校验、复合规则空条件拒绝、技能/学历数组条件生成）+ 动态规则 5 例（#16：落库后命中打标、重建实例从 DB 恢复、坏规则拒绝且不落库、删除/停用生效）。JDK 21+ 仅可编译（`mvn compile`），无法运行规则引擎。
 
-17 test cases in total: 5 rule-layer (DRL compiles, exclusive experience/performance ladders, tag provenance & dedup) + 5 service-layer (persistence filtering, field mapping, deactivate-then-save ordering) + 7 template-service (#14: real compilation validation, empty composite conditions rejected, skill/education array conditions). On JDK 21+ only compilation works; the rule engine cannot run.
+22 test cases in total: 5 rule-layer (DRL compiles, exclusive experience/performance ladders, tag provenance & dedup) + 5 service-layer (persistence filtering, field mapping, deactivate-then-save ordering) + 7 template-service (#14: real compilation validation, empty composite conditions rejected, skill/education array conditions) + 5 dynamic-rule (#16: persisted rules fire, recovery from DB after recreation, invalid rules rejected without persisting, delete/disable take effect). On JDK 21+ only compilation works; the rule engine cannot run.
 
 
 ---

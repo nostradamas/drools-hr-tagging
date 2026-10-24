@@ -10,11 +10,13 @@
 ## [Unreleased]
 
 ### Fixed
+- 动态规则落库与真热加载（#16）：`DynamicRuleService` 改以 `tag_rule` 表为单一事实源（启动从 DB 加载、增删改先落库后重编译，重启不丢）；重编译改用显式递增 ReleaseId 构建并原子替换 KieContainer，编译失败保留旧容器；`RuleServiceImpl.compileAndLoadRule` 不再编译即丢弃，改为委托动态规则通道真正加载；该类 `System.out/err` 全部改为 slf4j 日志；默认规则仅在规则库为空时初始化
 - 规则管理安全与模板引擎校验（#14）：规则管理写接口（POST/PUT/DELETE `/api/rule-management/**`）新增 Spring Security 管理员认证（HTTP Basic，账号走环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD`），CORS 由通配 `*`+凭据收紧为配置白名单（`CORS_ALLOWED_ORIGINS`）；`RuleTemplateService.validateRule` 由字符串包含检查改为 KieBuilder 真实编译校验；复合模板在无有效条件时拒绝生成空 when 规则；条件中的技能/学历数组改为类型安全解析，修复 `(String[])` 强转的 ClassCastException，并对拼入 DRL 的字符串做转义、运算符加白名单
 - 打标规则三重缺陷：静态 DRL 类型不匹配导致规则静默不生效、档位区间重叠产生矛盾标签、双文件重复打标（#10）
 - 规则产出标签此前仅 println，现由服务层统一批量落库 employee_tag 表（演示场景无主键时仅内存返回）（#10）
 
 ### Added
+- 动态规则服务测试 5 项：落库命中、重建实例恢复、坏规则拒绝、删除与停用（#16）
 - 打标规则测试套件：DRL 可编译性、经验/绩效应互斥、标签来源与去重共 5 项断言（#10）
 - 服务层落库测试 5 项：persistRuleEngineTags 过滤条件、entity 字段映射、旧标签失效 SQL 条件与先失效后保存顺序（#12）
 

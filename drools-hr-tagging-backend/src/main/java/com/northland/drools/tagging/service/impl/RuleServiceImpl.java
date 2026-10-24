@@ -13,7 +13,6 @@ import com.northland.drools.tagging.model.dto.RuleValidateResult;
 import com.northland.drools.tagging.service.RuleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.drools.core.io.impl.ByteArrayResource;
 import org.kie.api.KieServices;
 import org.kie.api.builder.*;
 import org.kie.api.runtime.KieContainer;
@@ -36,6 +35,8 @@ import java.util.UUID;
 public class RuleServiceImpl extends ServiceImpl<RuleTemplateMapper, RuleTemplate> implements RuleService {
 
     private final KieContainer kieContainer;
+
+    private final com.northland.drools.tagging.service.DynamicRuleService dynamicRuleService;
 
     @Override
     public IPage<RuleTemplate> queryRuleTemplates(Page<RuleTemplate> page, String keyword) {
@@ -80,33 +81,52 @@ public class RuleServiceImpl extends ServiceImpl<RuleTemplateMapper, RuleTemplat
         }
     }
 
+    /**
+     * 编译并加载规则（#16 修复）。
+     *
+     * <p>旧实现只做编译校验、编译成功后直接丢弃结果，规则从未进入任何容器。
+     * 现在从 DRL 中解析规则名生成 ruleCode，委托 {@link com.northland.drools.tagging.service.DynamicRuleService}
+     * 走"真编译校验 → 落库 → 重编译热加载"的完整通道，加载后即可通过动态规则会话执行。</p>
+     *
+     * @param ruleContent 完整的 DRL 文本，必须包含至少一条 {@code rule "名称"} 声明
+     * @return 加载成功返回 true；内容为空、无规则名或校验/落库失败返回 false
+     */
     @Override
     public boolean compileAndLoadRule(String ruleContent) {
         if (!StringUtils.hasText(ruleContent)) {
             return false;
         }
 
-        try {
-            KieServices kieServices = KieServices.Factory.get();
-            KieFileSystem kieFileSystem = kieServices.newKieFileSystem();
-            
-            ByteArrayResource resource = new ByteArrayResource(ruleContent.getBytes(StandardCharsets.UTF_8));
-            String path = "src/main/resources/rules/temp_" + UUID.randomUUID() + ".drl";
-            kieFileSystem.write(path, resource);
-            
-            KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
-            Results results = kieBuilder.buildAll().getResults();
-            
-            if (results.hasMessages(Message.Level.ERROR)) {
-                log.error("编译规则失败: {}", results.getMessages());
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            log.error("编译并加载规则失败", e);
+        String ruleName = extractFirstRuleName(ruleContent);
+        if (ruleName == null) {
+            log.error("编译并加载规则失败: DRL 中未找到 rule 声明");
             return false;
         }
+
+        com.northland.drools.tagging.model.TagRule tagRule =
+                new com.northland.drools.tagging.model.TagRule(
+                        toRuleCode(ruleName), ruleName, "AD_HOC", "CUSTOM");
+        tagRule.setRuleContent(ruleContent);
+        tagRule.setDescription("经 compileAndLoadRule 加载的临时规则");
+
+        boolean loaded = dynamicRuleService.addOrUpdateRule(tagRule);
+        if (!loaded) {
+            log.error("编译并加载规则 {} 失败", ruleName);
+        }
+        return loaded;
+    }
+
+    /** 从 DRL 文本中解析第一条规则的名称（rule "名称"）。 */
+    private String extractFirstRuleName(String ruleContent) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("rule\\s+\"([^\"]+)\"")
+                .matcher(ruleContent);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
+    /** 规则名 → ruleCode：非字母数字下划线替换为下划线并转大写。 */
+    private String toRuleCode(String ruleName) {
+        return "DYN_" + ruleName.replaceAll("[^A-Za-z0-9]", "_").toUpperCase();
     }
 
     @Override
