@@ -17,6 +17,18 @@ import java.util.Map;
 public interface TagRuleMapper extends BaseMapper<TagRule> {
 
     /**
+     * 查询全部规则（含未启用），供动态规则服务启动加载
+     */
+    @Select("SELECT * FROM tag_rule ORDER BY priority DESC")
+    List<TagRule> findAllRules();
+
+    /**
+     * 根据规则编码查询单条规则（不存在返回 null）
+     */
+    @Select("SELECT * FROM tag_rule WHERE rule_code = #{ruleCode}")
+    TagRule findByRuleCode(@Param("ruleCode") String ruleCode);
+
+    /**
      * 根据标签编码查询规则
      */
     @Select("SELECT * FROM tag_rule WHERE tag_code = #{tagCode} AND is_active = 1 ORDER BY priority DESC")
