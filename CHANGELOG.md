@@ -10,22 +10,26 @@
 ## [Unreleased]
 
 ### Fixed
+- 岗位匹配 DRL 两处缺陷（#18，新增测试时发现）：函数签名使用 `List<String>` 泛型导致 Drools 7.73 无法解析、整个岗位匹配规则编译失败（连带 DroolsConfig 启动即抛错），改无泛型签名修复；推荐定档规则因评分改分不 update 事实而只按初始 0 分求值、恒为「不推荐」，规则按 agenda-group 拆分评分/推荐两阶段并在服务层分阶段触发后修复
 - 动态规则落库与真热加载（#16）：`DynamicRuleService` 改以 `tag_rule` 表为单一事实源（启动从 DB 加载、增删改先落库后重编译，重启不丢）；重编译改用显式递增 ReleaseId 构建并原子替换 KieContainer，编译失败保留旧容器；`RuleServiceImpl.compileAndLoadRule` 不再编译即丢弃，改为委托动态规则通道真正加载；该类 `System.out/err` 全部改为 slf4j 日志；默认规则仅在规则库为空时初始化
 - 规则管理安全与模板引擎校验（#14）：规则管理写接口（POST/PUT/DELETE `/api/rule-management/**`）新增 Spring Security 管理员认证（HTTP Basic，账号走环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD`），CORS 由通配 `*`+凭据收紧为配置白名单（`CORS_ALLOWED_ORIGINS`）；`RuleTemplateService.validateRule` 由字符串包含检查改为 KieBuilder 真实编译校验；复合模板在无有效条件时拒绝生成空 when 规则；条件中的技能/学历数组改为类型安全解析，修复 `(String[])` 强转的 ClassCastException，并对拼入 DRL 的字符串做转义、运算符加白名单
 - 打标规则三重缺陷：静态 DRL 类型不匹配导致规则静默不生效、档位区间重叠产生矛盾标签、双文件重复打标（#10）
 - 规则产出标签此前仅 println，现由服务层统一批量落库 employee_tag 表（演示场景无主键时仅内存返回）（#10）
 
 ### Added
+- GitHub Actions CI（#18）：push / PR 触发，JDK 8 与 17 双矩阵执行 `mvn clean test` 作为合并门禁；README 增加 CI 状态徽章
+- 岗位匹配规则测试 4 项：全维度命中封顶 100、必需技能部分匹配按比例计分、不匹配原因留痕、高绩效加分（#18）
 - 动态规则服务测试 5 项：落库命中、重建实例恢复、坏规则拒绝、删除与停用（#16）
 - 打标规则测试套件：DRL 可编译性、经验/绩效应互斥、标签来源与去重共 5 项断言（#10）
 - 服务层落库测试 5 项：persistRuleEngineTags 过滤条件、entity 字段映射、旧标签失效 SQL 条件与先失效后保存顺序（#12）
 
 ### Changed
+- Spring Boot 2.7.0 → 2.7.18（2.7.x 最后补丁版，含 Spring Framework 5.3.31 等依赖刷新）（#18）
 - 规则重写为互斥区间档位：经验 5 档 / 绩效 5 档，双文件按履历/考评维度分工（#10）
 
 ## [1.0.0] - 2026-10-23
 
-首次公开发布。基于企业内部验证过的 Drools 落地实践整理而成，发布前已完成一轮框架审查修复（详见下方 Fixed）。
+基于 Drools 7.73 + Spring Boot 2.7 的员工智能打标与岗位匹配系统：规则在线管理与动态热加载、多维自动打标、五维岗位匹配评分，配套 Vue 2 管理前端。下方为本版本的功能清单与发布前框架审查修复记录。
 
 ### 新增 / Added
 

@@ -7,6 +7,7 @@ import java.util.List
 
 // 基础工作经验匹配规则
 rule "工作经验匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -21,6 +22,7 @@ end
 
 // 工作经验不匹配规则
 rule "工作经验不匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -35,6 +37,7 @@ end
 
 // 必需技能匹配规则
 rule "必需技能完全匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -48,6 +51,7 @@ end
 
 // 必需技能部分匹配规则
 rule "必需技能部分匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -65,6 +69,7 @@ end
 
 // 必需技能缺失规则
 rule "必需技能缺失"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -77,6 +82,7 @@ end
 
 // 优选技能匹配规则
 rule "优选技能匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -93,6 +99,7 @@ end
 
 // 学历匹配规则
 rule "学历匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -106,6 +113,7 @@ end
 
 // 学历不匹配规则
 rule "学历不匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -118,6 +126,7 @@ end
 
 // 薪资期望匹配规则
 rule "薪资期望匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -132,6 +141,7 @@ end
 
 // 薪资期望过高规则
 rule "薪资期望过高"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -145,6 +155,7 @@ end
 
 // 管理经验匹配规则
 rule "管理经验匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -158,6 +169,7 @@ end
 
 // 管理经验缺失规则
 rule "管理经验缺失"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -170,6 +182,7 @@ end
 
 // 绩效分数加分规则
 rule "高绩效加分"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -182,6 +195,7 @@ end
 
 // 职位级别匹配规则
 rule "初级职位匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -194,6 +208,7 @@ rule "初级职位匹配"
 end
 
 rule "中级职位匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -207,6 +222,7 @@ rule "中级职位匹配"
 end
 
 rule "高级职位匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -219,6 +235,7 @@ rule "高级职位匹配"
 end
 
 rule "专家职位匹配"
+    agenda-group "scoring"
     when
         $result : MatchingResult()
         $employee : Employee() from $result.getEmployee()
@@ -232,6 +249,7 @@ end
 
 // 最终推荐规则
 rule "高度推荐"
+    agenda-group "recommendation"
     when
         $result : MatchingResult(matchScore >= 80)
     then
@@ -241,6 +259,7 @@ rule "高度推荐"
 end
 
 rule "一般推荐"
+    agenda-group "recommendation"
     when
         $result : MatchingResult(matchScore >= 60 && matchScore < 80)
     then
@@ -250,6 +269,7 @@ rule "一般推荐"
 end
 
 rule "不推荐"
+    agenda-group "recommendation"
     when
         $result : MatchingResult(matchScore < 60)
     then
@@ -259,25 +279,27 @@ rule "不推荐"
 end
 
 // 辅助函数定义
-function boolean hasAllRequiredSkills(List<String> employeeSkills, List<String> requiredSkills) {
+function boolean hasAllRequiredSkills(List employeeSkills, List requiredSkills) {
+    // 注意：函数签名不能写 List<String> 泛型，Drools 7.73 编译函数时无法解析带泛型的类型，
+    // 会报 Unable to resolve type List<String> 导致整个 DRL 编译失败（#18 测试发现）。
     if (requiredSkills == null || requiredSkills.isEmpty()) {
         return true;
     }
-    for (String skill : requiredSkills) {
-        if (!employeeSkills.contains(skill)) {
+    for (int i = 0; i < requiredSkills.size(); i++) {
+        if (!employeeSkills.contains(requiredSkills.get(i))) {
             return false;
         }
     }
     return true;
 }
 
-function int getSkillMatchCount(List<String> employeeSkills, List<String> targetSkills) {
+function int getSkillMatchCount(List employeeSkills, List targetSkills) {
     if (targetSkills == null || targetSkills.isEmpty()) {
         return 0;
     }
     int count = 0;
-    for (String skill : targetSkills) {
-        if (employeeSkills.contains(skill)) {
+    for (int i = 0; i < targetSkills.size(); i++) {
+        if (employeeSkills.contains(targetSkills.get(i))) {
             count++;
         }
     }

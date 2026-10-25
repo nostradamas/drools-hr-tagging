@@ -1,0 +1,30 @@
+name: CI
+
+# 合并门禁：push 到 main 与所有 PR 都必须在 JDK 8 / 17 双矩阵上跑通全量测试。
+# 运行时支持范围为 JDK 8 ~ 17（Drools 7.x 的 MVEL 依赖 JDK 21 起被移除的
+# java.lang.Compiler），矩阵两端各跑一遍，防止只在单一版本上可用。
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    name: mvn test (JDK ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ '8', '17' ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Build and test backend
+        run: mvn -B clean test -f drools-hr-tagging-backend/pom.xml
