@@ -27,14 +27,13 @@
 │   └── src/
 ├── database/                   # SQL 脚本
 │   └── create_tables.sql
-├── docs/                       # 项目文档
+├── docs/                       # 教程与图片（建设中）
 ├── specs/                      # Spec 规格说明
 │   ├── requirements.md
 │   ├── design.md
 │   ├── tasks.md
 │   └── acceptance.md
 ├── .github/                    # CI + Issue 模板
-├── rules/                      # 规则参考资料
 ├── README.md                   # 中英双语
 ├── LICENSE                     # Apache-2.0
 ├── CONTRIBUTING.md
@@ -43,7 +42,7 @@
 
 ## 技术栈硬性约束
 - Java 1.8 目标（release=8 编译）；**运行时限 JDK 8 ~ 17**：Drools 7.x 的 MVEL 依赖 java.lang.Compiler，JDK 21+ 被移除会 ClassNotFoundException
-- Spring Boot 2.7.0（不升级 3.x，因 Drools 7.x 对 Jakarta EE 支持有限）
+- Spring Boot 2.7.18（2.7.x 最后补丁版；不升级 3.x，因 Drools 7.x 对 Jakarta EE 支持有限）
 - Drools 7.73.0.Final（不升级 8.x，保持 javax.* 命名空间兼容）
 - MyBatis-Plus 3.5.3
 - MySQL 5.7+（开发可用 H2 内存库替代）

@@ -68,7 +68,7 @@
 ├─────────────────────────┼───────────────────────────────────────┤
 │                    后端 (Backend)                               │
 │  ┌──────────────────────┴────────────────────────────────────┐  │
-│  │              Spring Boot 2.7.0 (REST Controller)          │  │
+│  │              Spring Boot 2.7.18 (REST Controller)         │  │
 │  ├───────────────────────────────────────────────────────────┤  │
 │  │              Service Layer (业务逻辑层)                    │  │
 │  ├──────────┬──────────────────────────────┬─────────────────┤  │
@@ -100,7 +100,39 @@
 | JDK               | 8（推荐）/ 11 ~ 17（Drools 7.x 不兼容 JDK 21+） |
 | Maven             | 3.6+          |
 | MySQL             | 5.7+          |
-| Node.js           | 14+           |
+| Node.js           | 14 / 16（17+ 需加参数，见下方前端步骤） |
+
+### 30 秒预览（免数据库）/ 30-Second Preview (No Database)
+
+想先看规则引擎的效果，不必先装 MySQL：岗位匹配的演示端点使用代码内构造的示例员工/岗位数据，经 DRL 在内存中计算，**不读写数据库**。只启动后端即可调用：
+
+```bash
+mvn spring-boot:run -f drools-hr-tagging-backend/pom.xml
+
+curl http://localhost:8080/api/matching/test       # 单个示例员工 × 单个岗位：五维评分与推荐档位
+curl http://localhost:8080/api/matching/test-data  # 演示用的示例员工与岗位数据
+curl http://localhost:8080/api/matching/demo       # 全部示例员工对「高级 Java 开发工程师」岗位的批量匹配结果
+```
+
+预期效果：返回匹配总分（0–100）、各维度得分与推荐档位（强烈推荐 / 一般推荐 / 不推荐）。
+
+> 实现说明：连接池配置了 `initialization-fail-timeout=-1`（懒初始化），数据库不可用时应用仍可启动；此时依赖数据库的接口会在连接恢复前逐请求返回错误。若希望启动时即校验数据库，删除该配置行即可（Hikari 默认 fail-fast）。
+
+> 其余接口（员工/标签 CRUD、打标落库、规则管理等）需要 MySQL，请按下方「Docker 一键启动」或「安装步骤」启动完整环境。
+
+The matching demo endpoints above evaluate in-code sample data with the DRL rules in memory — no database access. All other APIs require MySQL.
+
+### Docker 一键启动 / Docker Compose
+
+```bash
+docker compose up -d --build
+```
+
+- 自动拉起 MySQL 8 与后端：MySQL 首次启动时执行 `database/create_tables.sql` 建库建表并导入演示数据，后端等 MySQL 健康检查通过后才启动
+- 后端访问 / Backend: http://localhost:8080 ；MySQL 映射到本机 3306，数据持久化在数据卷 `drools-mysql-data`
+- MySQL root 密码可用环境变量 `MYSQL_ROOT_PASSWORD` 覆盖（默认 `root`），后端的数据源密码随之同步
+- 管理员账号（规则管理写接口用）来自环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD`：compose 默认用户名 `admin`；密码未设置时启动日志会打印一次性随机密码，正式使用请显式设置 `ADMIN_PASSWORD`
+- 前端不在 compose 内，仍按下方安装步骤第 5 步本地启动（端口 9528）
 
 ### 安装步骤 / Installation
 
@@ -121,6 +153,10 @@ mysql -u root -p < database/create_tables.sql
 mvn spring-boot:run -f drools-hr-tagging-backend/pom.xml
 
 # 5. 启动前端 / Start the frontend (新开终端 / new terminal, 端口 9528)
+#    前端基于 Vue CLI 4（webpack 4），Node 14 / 16 可直接运行；
+#    Node 17+ 与 OpenSSL 3 不兼容（启动报 error:0308010C），需先设置：
+#    Node 17+ requires the legacy OpenSSL provider (webpack 4 vs OpenSSL 3):
+#      export NODE_OPTIONS=--openssl-legacy-provider
 cd drools-hr-tagging-frontend
 npm install
 npm run dev
@@ -160,6 +196,19 @@ mvn clean test -f drools-hr-tagging-backend/pom.xml
 | 员工与标签维护 / CRUD          | `/api/employees/**`、`/api/tags/**`、`/api/tag-categories/**` | 员工、标签、标签分类分页 CRUD |
 ---
 
+## 已知限制 / Known Limitations
+
+- **COMPOSITE 复合规则模板尚未完全实现**：`RuleTemplateService` 的复合模板生成目前为骨架实现，请优先使用其余模板或自定义 DRL。
+  The COMPOSITE rule template is still a skeleton implementation; prefer the other templates or custom DRL.
+- **运行时仅支持 JDK 8 ~ 17**：Drools 7.x 的 MVEL 依赖 `java.lang.Compiler`（JDK 21 起被移除），JDK 21+ 下可编译但规则引擎无法运行。
+  Runtime requires JDK 8–17; on JDK 21+ the code compiles but the rule engine cannot run.
+- **应用型参考实现**：本项目定位为可运行的应用示例，不提供可供其他 Maven 项目引用的库坐标。
+  This project is a runnable application reference implementation; no library artifact is published for reuse as a Maven dependency.
+- **无数据库启动为预览用途**：连接池使用懒初始化以支持免数据库预览（见「30 秒预览」）；生产部署建议移除该配置，使数据库不可用时启动即失败。
+  Booting without a database is intended for preview only (lazy pool initialization); for production, remove that setting so a dead database fails the boot instead.
+
+---
+
 ## 项目结构 / Directory Structure
 
 ```
@@ -197,7 +246,8 @@ drools-hr-tagging/
 │       ├── router/ · store/ · utils/
 │       └── assets/
 ├── database/create_tables.sql           # 建库建表 + 演示数据脚本
-├── docs/ · specs/                       # 开发文档 / 规格说明（需求·设计·任务·验收）
+├── docs/                                # 教程与图片（建设中）
+├── specs/                               # 规格说明（需求·设计·任务·验收）
 ├── AGENTS.md                            # AI 协作说明（架构约束、已知陷阱）
 └── README.md · LICENSE · CHANGELOG.md · CONTRIBUTING.md
 ```
