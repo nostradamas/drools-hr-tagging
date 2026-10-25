@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Drools HR Tagging - Frontend",
+  "engines": {
+    "node": "14.x || 16.x"
+  },
   "scripts": {
     "dev": "vue-cli-service serve",
     "build": "vue-cli-service build",

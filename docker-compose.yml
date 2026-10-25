@@ -1,0 +1,45 @@
+# 一键启动：MySQL 8 + 后端（前端仍按 README 本地启动，端口 9528）
+# 用法 / Usage: docker compose up -d --build
+# 后端 / Backend: http://localhost:8080
+services:
+  mysql:
+    image: mysql:8
+    container_name: drools-hr-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: employee_tagging
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      # 首次启动自动执行建库建表 + 演示数据脚本（脚本内含 CREATE DATABASE / USE，与 MYSQL_DATABASE 一致）
+      - ./database/create_tables.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - drools-mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: drools-hr-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # 数据源（与 application.properties 的 spring.datasource.* 对应，Spring Boot relaxed binding）
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/employee_tagging?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      # 规则管理写接口的管理员账号（对应 application.properties 的 app.admin.*，走 ADMIN_USERNAME / ADMIN_PASSWORD 占位符）
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    ports:
+      - "8080:8080"
+
+volumes:
+  drools-mysql-data:

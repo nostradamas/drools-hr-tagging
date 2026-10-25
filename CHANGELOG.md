@@ -26,6 +26,14 @@
 ### Changed
 - Spring Boot 2.7.0 → 2.7.18（2.7.x 最后补丁版，含 Spring Framework 5.3.31 等依赖刷新）（#18）
 - 规则重写为互斥区间档位：经验 5 档 / 绩效 5 档，双文件按履历/考评维度分工（#10）
+- CONTRIBUTING 按实际流程改写（#20）：分支策略改为从 main 检出 `feature/*` / `fix/<Issue号>-*` 并提向 main（删除从未使用的 develop / release 分支约定）；删除无度量支撑的「覆盖率 ≥80%」条款，改为新增/修改逻辑需带测试且 CI 全绿；新增本地验证清单
+- 文档纠偏（#20）：README 架构图 Spring Boot 版本 2.7.0 → 2.7.18；README / AGENTS.md 删除不存在的 `rules/` 目录引用，`docs/` 标注为教程与图片（建设中）；前端 Node 版本说明修正为 14 / 16（17+ 需 `NODE_OPTIONS=--openssl-legacy-provider`），前端 package.json 增加 engines 约束
+
+### Added（开源体验 #20）
+- 连接池改为懒初始化（#20）：`spring.datasource.hikari.initialization-fail-timeout=-1`，数据库不可用时应用仍可启动以支持免数据库预览；依赖数据库的接口在连接恢复前逐请求报错，需要启动即校验时移除该行即可
+- Docker 一键启动：新增 `docker-compose.yml`（MySQL 8 自动执行建表脚本 + 后端，健康检查后启动）与多阶段 `Dockerfile`（JDK 17 构建与运行）
+- README 新增「30 秒预览（免数据库）」小节：岗位匹配演示端点（`/api/matching/test`、`/test-data`、`/demo`）使用代码内示例数据、不读写数据库，只起后端即可试用；另新增「已知限制」小节（COMPOSITE 模板未完全实现、运行时限 JDK 8–17、应用型定位不提供 Maven 库坐标）
+- 新增 `.github/PULL_REQUEST_TEMPLATE.md`（变更说明 / 关联 Issue / 测试证据 / 检查清单）与 `SECURITY.md`（GitHub 私有通道报告 + 支持版本表）
 
 ## [1.0.0] - 2026-10-23
 

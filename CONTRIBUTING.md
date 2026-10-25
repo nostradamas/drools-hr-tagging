@@ -10,6 +10,7 @@
 - [提交代码](#提交代码)
   - [分支策略](#分支策略)
   - [开发流程](#开发流程)
+  - [本地验证清单](#本地验证清单)
   - [代码规范](#代码规范)
   - [提交信息规范](#提交信息规范)
 - [代码审查](#代码审查)
@@ -45,22 +46,30 @@
 
 本项目采用以下分支管理策略：
 
-- `main` — 主分支，保持稳定，随时可发布
-- `develop` — 开发分支，集成已完成的功能
-- `feature/*` — 功能分支，从 `develop` 检出
-- `fix/*` — 修复分支
-- `release/*` — 发布准备分支
+- `main` — 唯一长期分支，保持稳定，随时可发布；所有 PR 均提向 `main`
+- `feature/<简述>` — 功能分支，从 `main` 检出，如 `feature/rule-versioning`
+- `fix/<Issue号>-<简述>` — 修复分支，从 `main` 检出，如 `fix/18-matching-drl`
 
 ### 开发流程
 
 1. Fork 本仓库并克隆到本地
-2. 从 `develop` 创建功能分支：`git checkout -b feature/my-feature develop`
+2. 从 `main` 创建分支：`git checkout -b feature/my-feature main`（修复用 `fix/<Issue号>-<简述>`）
 3. 在分支上进行开发
 4. 编写或更新测试用例，确保所有测试通过
 5. 确保代码风格符合项目规范
 6. 提交代码（请遵循提交信息规范）
 7. 推送到你的 Fork 仓库
-8. 向 `develop` 分支发起 Pull Request
+8. 向 `main` 分支发起 Pull Request
+
+### 本地验证清单
+
+提交 PR 前请在本地完成以下自查：
+
+- [ ] JDK 为 8 ~ 17 任一版本（Drools 7.x 不兼容 JDK 21+，运行时会报错）
+- [ ] 后端全量测试通过：`mvn -B clean test -f drools-hr-tagging-backend/pom.xml`
+- [ ] 新增/修改的业务逻辑带有测试；PR 的 CI（JDK 8 + 17 双矩阵）必须全绿
+- [ ] 涉及的文档已同步（README / CHANGELOG 的 [Unreleased] 等）
+- [ ] 提交信息符合 Conventional Commits 规范，且不含密码、密钥等敏感信息
 
 ### 代码规范
 
@@ -72,7 +81,7 @@
 - 常量使用 UPPER_SNAKE_CASE
 - 方法体尽量简短，一个方法不超过 80 行
 - 添加必要的 JavaDoc 注释，尤其是公共 API 方法
-- 单元测试覆盖率不低于 80%
+- 新增/修改的业务逻辑需带测试，PR 的 CI（JDK 8 + 17）必须全绿
 
 #### 前端代码 (Vue)
 
@@ -147,10 +156,9 @@ feat(rule): 添加规则版本管理功能
 
 ## 发布流程
 
-1. 从 `develop` 创建 `release/vX.Y.Z` 分支
-2. 在发布分支上进行最终测试和文档更新
-3. 合并到 `main` 并打 Tag
-4. 合并回 `develop`
+1. 确认 `main` 上 CI 全绿，CHANGELOG 的 [Unreleased] 已整理为新版本条目
+2. 在 `main` 上打版本 Tag（如 `v1.1.0`）
+3. 基于 Tag 创建 GitHub Release，附更新说明
 
 ---
 
