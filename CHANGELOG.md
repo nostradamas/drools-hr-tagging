@@ -9,6 +9,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-25
+
 ### Fixed
 - 岗位匹配 DRL 两处缺陷（#18，新增测试时发现）：函数签名使用 `List<String>` 泛型导致 Drools 7.73 无法解析、整个岗位匹配规则编译失败（连带 DroolsConfig 启动即抛错），改无泛型签名修复；推荐定档规则因评分改分不 update 事实而只按初始 0 分求值、恒为「不推荐」，规则按 agenda-group 拆分评分/推荐两阶段并在服务层分阶段触发后修复
 - 动态规则落库与真热加载（#16）：`DynamicRuleService` 改以 `tag_rule` 表为单一事实源（启动从 DB 加载、增删改先落库后重编译，重启不丢）；重编译改用显式递增 ReleaseId 构建并原子替换 KieContainer，编译失败保留旧容器；`RuleServiceImpl.compileAndLoadRule` 不再编译即丢弃，改为委托动态规则通道真正加载；该类 `System.out/err` 全部改为 slf4j 日志；默认规则仅在规则库为空时初始化
