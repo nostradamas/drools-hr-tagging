@@ -230,6 +230,35 @@ CREATE TABLE `system_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统配置表';
 
 -- =============================================
+-- 8. 标签分类表
+-- 存量库请勿重跑本文件（每表前 DROP 会清数据），改执行
+-- database/add_tag_category_rule_template.sql 增量补表
+-- =============================================
+DROP TABLE IF EXISTS `tag_category`;
+CREATE TABLE `tag_category` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `category_name` varchar(100) NOT NULL COMMENT '分类名称',
+  `description` text COMMENT '分类描述',
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_category_name` (`category_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='标签分类表';
+
+-- =============================================
+-- 9. 规则模板表
+-- =============================================
+DROP TABLE IF EXISTS `rule_template`;
+CREATE TABLE `rule_template` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `template_name` varchar(100) NOT NULL COMMENT '模板名称',
+  `description` text COMMENT '模板描述',
+  `rule_content` longtext COMMENT '规则内容(DRL格式)',
+
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_template_name` (`template_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='规则模板表';
+
+-- =============================================
 -- 初始化基础数据
 -- =============================================
 

@@ -9,6 +9,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- 建表脚本缺两张实体表（#23）：`database/create_tables.sql` 补建 `tag_category` 与 `rule_template`（此前全新部署后 `/api/tag-categories` 必报 Table doesn't exist，`RuleService` 的规则模板方法同理）；新增存量库增量补表脚本 `database/add_tag_category_rule_template.sql`（幂等、不动存量数据），并新增 `scripts/check_entity_tables.py` 实体↔建表脚本一致性检查接入 CI
+
 ## [1.1.0] - 2026-10-25
 
 ### Fixed
