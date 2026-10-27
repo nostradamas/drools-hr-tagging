@@ -7,6 +7,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+
 jobs:
   test:
     name: mvn test (JDK ${{ matrix.java }})
@@ -29,5 +30,6 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
           cache: maven
+      
       - name: Build and test backend
         run: mvn -B clean test -f drools-hr-tagging-backend/pom.xml
